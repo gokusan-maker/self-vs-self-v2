@@ -80,8 +80,8 @@ const getDamage = (minutes) => {
   if (minutes <= 30) return { damage: 15, label: '油断' };
   if (minutes <= 60) return { damage: 30, label: '時間泥棒' };
   if (minutes <= 120) return { damage: 60, label: '大ダメージ' };
-  if (minutes <= 180) return { damage: 100, label: '致命傷' };
-  return { damage: Math.min(200, 100 + Math.floor((minutes - 180) / 30) * 20), label: '自殺行為' };
+  if (minutes <= 180) return { damage: 100, label: '深刻' };
+  return { damage: Math.min(200, 100 + Math.floor((minutes - 180) / 30) * 20), label: '危険水域' };
 };
 
 // 宣言した時間をオーバーした場合の追加ペナルティ
@@ -141,19 +141,19 @@ const QUOTES = {
   idle: [
     'KEEP GOING. それしかねえだろ。',
     'NO EXCUSES. 言い訳考える時間で1個やれ。',
-    'MOVE NOW. 快適さはお前を殺す。',
+    'MOVE NOW. 快適さはお前を鈍らせる。',
     'WAR STARTS HERE. 今日も戦いだ。',
     'NO ONE\'S COMING. 自分でやれ。',
     'EMBRACE THE PAIN. 痛みは友達だ。',
     'BREAK THE LIMIT. 限界を決めてるのはお前自身だ。',
     'SHUT UP AND MOVE. 頭の声を黙らせろ。',
-    'KILL YESTERDAY\'S YOU. 昨日の自分を殺せ。',
+    'BEAT YESTERDAY\'S YOU. 昨日の自分を超えろ。',
     'NEVER QUIT. これだけ覚えとけ。',
     'DISCIPLINE OVER MOTIVATION. やる気は嘘。規律だけが本物。',
     'GO HARDER. お前はまだ本気を出してない。',
     'NO MERCY. 自分の弱さに容赦するな。',
     'HARDEN UP. 立て。今すぐだ。',
-    'COMFORT KILLS. 快適なベッドは墓場だ。',
+    'COMFORT TRAPS YOU. 快適なベッドは甘い罠だ。',
     'EVERY DAY COUNTS. 今日サボったら明日のお前が今日を恨むぞ。',
     'NO WITNESS, NO MATTER. 誰も見てない時に何をするかが全てだ。',
     'FORGE YOUR MIND. 心を鋼にしろ。',
@@ -162,13 +162,13 @@ const QUOTES = {
     'YOUR MIRROR IS YOUR ENEMY. お前は鏡の中の敵と戦ってる。',
     'BEST EFFORT. 最高じゃなくていい。最善を尽くせ。',
     'FUCK YOUR FEELINGS. 気分なんか関係ねえ。やれ。',
-    'KILL THE WEAK YOU. 弱い自分を毎日少しずつ殺せ。',
+    'BEAT THE WEAK YOU. 弱い自分を毎日少しずつ超えろ。',
     'YOU ARE ON YOUR OWN. 誰もお前を救わない。',
     'OWN IT. お前の人生はお前の責任だ。',
     'ONE MORE STEP. 小さい一歩でいい。だが止まるな。',
     'DO THE HARD THING. 嫌なことをやれ。それが成長だ。',
     'KEEP GOING. これは挨拶じゃない。命令だ。',
-    'SWEAT. BLEED. RISE. 汗かいて、血流して、立ち上がれ。',
+    'SWEAT. PUSH. RISE. 汗かいて、踏ん張って、立ち上がれ。',
     'THE WORLD WON\'T WAIT. 世界はお前を待たない。',
     '99% DON\'T DO THIS. 誰もやらないことをやれ。',
     'PROVE YOURSELF. 自分に証明しろ。',
@@ -247,7 +247,7 @@ const QUOTES = {
     'HARDEN UP! 起きたな。次は何をやる？',
     'FIRST WIN. ベッドを離れた。最初の戦いに勝った。',
     'MOVE. DON\'T THINK. 起きた。動け。考えるな。',
-    'ESCAPE THE GRAVE. 布団は墓場だ。脱出したな。',
+    'ESCAPE THE TRAP. 布団は甘い罠だ。脱出したな。',
   ],
   wakeUpEarly: [
     'WINNER\'S HOUR. これが勝者の起床時間だ！',
@@ -271,7 +271,7 @@ const QUOTES = {
     'PHONE DOWN. それが勝者の選択だ。',
   ],
   sleepLate: [
-    'YOU\'RE KILLING TOMORROW. 明日の自分を殺す気か。',
+    'YOU\'RE HURTING TOMORROW. 明日の自分の足を引っ張る気か。',
     'GO TO SLEEP. こんな時間まで何してた。',
     'NIGHT OWL = WEAK. 夜更かしは弱さの証明だ。',
   ],
@@ -292,9 +292,9 @@ const QUOTES = {
     'TIME THIEF. 時間泥棒だ。気づけ。',
   ],
   badLong: [
-    'YOU JUST KILLED YOURSELF. 自分を殺した。',
+    'YOU JUST LOST TO YOURSELF. 自分に負けた。',
     'HOURS GONE. それがお前の人生か？',
-    'FATAL. 致命傷だ。明日取り返せ。',
+    'BIG LOSS. 大きな痛手だ。明日取り返せ。',
     'WEAKNESS WON. 記録して次は勝て。',
   ],
   recovery: [
@@ -419,6 +419,7 @@ export default function SelfVsSelf() {
   
   // クイックスタート用
   const [quickText, setQuickText] = useState('');
+  const [badQuickText, setBadQuickText] = useState('');
   const [quickCategoryId, setQuickCategoryId] = useState('life');
   const [quickDifficulty, setQuickDifficulty] = useState('medium');
   const [isLoading, setIsLoading] = useState(true);
@@ -905,9 +906,9 @@ export default function SelfVsSelf() {
   };
 
   // ダメタスク新規入力モード → 代替提案ポップアップ
-  const startBadTaskCustom = () => {
+  const startBadTaskCustom = (text) => {
     if (activeBadTask) return;
-    setRedirectPopup({ mode: 'custom' });
+    setRedirectPopup({ mode: 'custom', customText: typeof text === 'string' ? text : '' });
   };
 
   // 過去履歴から → 代替提案ポップアップ
@@ -927,7 +928,7 @@ export default function SelfVsSelf() {
     } else if (rp.mode === 'history') {
       setBadStartDialog({ categoryId: null, customMode: true, customLabel: rp.historyItem.label, customEmoji: rp.historyItem.emoji });
     } else {
-      setBadStartDialog({ categoryId: null, customMode: true, customLabel: '', customEmoji: '📱' });
+      setBadStartDialog({ categoryId: null, customMode: true, customLabel: rp.customText || '', customEmoji: '📱' });
     }
   };
 
@@ -1225,7 +1226,7 @@ export default function SelfVsSelf() {
         {!activeTaskTimer && !activeBadTask && (
           <div className="mb-4 rounded-2xl border-2 border-green-700 bg-gradient-to-br from-green-950/40 to-emerald-950/30 overflow-hidden shadow-lg">
             <div className="bg-gradient-to-r from-green-600 to-emerald-600 px-4 py-2 flex items-center justify-between">
-              <div className="text-xs text-white font-black tracking-wider">🚀 今から始める</div>
+              <div className="text-xs text-white font-black tracking-wider">良いタスク</div>
               <div className="text-[10px] text-green-100 tracking-wider">ワンタップでタイマー起動</div>
             </div>
             <div className="p-4">
@@ -1291,6 +1292,44 @@ export default function SelfVsSelf() {
               <div className="text-[10px] text-green-500 text-center mt-2 tracking-wider font-bold">
                 ⏱️ 経過時間でポイント自動計算（長くやるほど高得点）
               </div>
+            </div>
+          </div>
+        )}
+
+        {/* 悪いタスクを登録 */}
+        {!activeBadTask && (
+          <div className="mb-4 rounded-2xl border-2 border-red-700 bg-gradient-to-br from-red-950/40 to-zinc-950/30 overflow-hidden">
+            <div className="bg-gradient-to-r from-red-700 to-orange-700 px-4 py-2 flex items-center justify-between">
+              <div className="text-xs text-white font-black tracking-wider">悪いタスク</div>
+              <button onClick={() => setShowBadSettings(true)} className="text-red-100 hover:text-white"><Settings className="w-3.5 h-3.5" /></button>
+            </div>
+            <div className="p-4">
+              <input
+                type="text"
+                value={badQuickText}
+                onChange={(e) => setBadQuickText(e.target.value)}
+                onKeyDown={(e) => { if (e.key === 'Enter' && badQuickText.trim()) { startBadTaskCustom(badQuickText); setBadQuickText(''); } }}
+                placeholder="何をしてしまう？（例: SNSをだらだら見る）"
+                className="w-full bg-black border-2 border-red-900 rounded-lg px-3 py-3 mb-3 focus:border-red-500 focus:outline-none placeholder-zinc-600 text-white font-bold"
+              />
+              <div className="flex flex-wrap gap-1.5 mb-3">
+                {badCategories.map(bc => (
+                  <button key={bc.id} onClick={() => startBadTask(bc.id)} className="px-3 py-2 rounded-lg text-sm font-bold transition border-2 bg-red-950/40 text-red-200 border-red-800 hover:border-red-500 active:scale-95">
+                    {bc.emoji} {bc.label}
+                  </button>
+                ))}
+                <button onClick={() => { setShowBadSettings(true); openBadCategoryEditor(); }} className="px-3 py-2 rounded-lg text-red-500 border-2 border-dashed border-red-900 hover:text-red-300 hover:border-red-600">
+                  <Plus className="w-4 h-4" />
+                </button>
+              </div>
+              <button
+                onClick={() => { if (badQuickText.trim()) { startBadTaskCustom(badQuickText); setBadQuickText(''); } }}
+                disabled={!badQuickText.trim()}
+                className="w-full bg-gradient-to-r from-red-700 to-orange-700 hover:from-red-600 hover:to-orange-600 text-white font-black tracking-wider py-3 rounded-lg disabled:opacity-30 disabled:cursor-not-allowed transition active:scale-95"
+              >
+                ⏱ 入力した内容で記録する
+              </button>
+              <div className="text-[10px] text-red-500/80 text-center mt-2 tracking-wider">押すと計測開始 → 経過時間でマイナス</div>
             </div>
           </div>
         )}
@@ -1412,26 +1451,6 @@ export default function SelfVsSelf() {
           </div>
         </div>
 
-        {/* 統計 */}
-        <div className="grid grid-cols-4 gap-1 mb-4">
-          <div className="border border-zinc-800 bg-zinc-950 p-2 text-center">
-            <div className="text-[8px] text-zinc-500 tracking-[0.2em] uppercase font-black">Streak</div>
-            <div className="text-xl font-black font-mono text-white mt-1">{streak}</div>
-          </div>
-          <div className="border border-zinc-800 bg-zinc-950 p-2 text-center">
-            <div className="text-[8px] text-zinc-500 tracking-[0.2em] uppercase font-black">Wins</div>
-            <div className="text-xl font-black font-mono text-white mt-1">{winCount}</div>
-          </div>
-          <div className="border border-zinc-800 bg-zinc-950 p-2 text-center">
-            <div className="text-[8px] text-zinc-500 tracking-[0.2em] uppercase font-black">Loss</div>
-            <div className="text-xl font-black font-mono text-red-500 mt-1">{lossCount}</div>
-          </div>
-          <div className="border border-zinc-800 bg-zinc-950 p-2 text-center">
-            <div className="text-[8px] text-zinc-500 tracking-[0.2em] uppercase font-black">Failed</div>
-            <div className="text-xl font-black font-mono text-zinc-500 mt-1">{failedCount}</div>
-          </div>
-        </div>
-
         {/* 今日のダメージログ */}
         {todayDamages.length > 0 && (
           <div className="mb-4 rounded-2xl border-2 border-red-900/60 bg-gradient-to-br from-red-950/30 to-zinc-900 p-3 shadow-md">
@@ -1469,7 +1488,7 @@ export default function SelfVsSelf() {
 
         {/* タスク追加 */}
         <div className="border border-zinc-800 bg-zinc-950 mb-4">
-          <div className="border-b border-zinc-800 px-4 py-2 text-[10px] text-zinc-500 font-black tracking-[0.3em] uppercase">Queue Task</div>
+          <div className="border-b border-zinc-800 px-4 py-2 text-[10px] text-zinc-500 font-black tracking-[0.3em] uppercase">スケジュールを作成</div>
           <div className="p-4">
             <input type="text" value={newTask} onChange={(e) => setNewTask(e.target.value)} onKeyDown={(e) => e.key === 'Enter' && addTask()} placeholder="ENTER TASK..." className="w-full bg-black border border-zinc-800 px-3 py-2.5 mb-2 focus:border-white focus:outline-none placeholder-zinc-700 tracking-wider uppercase text-sm" />
             
@@ -1682,37 +1701,6 @@ export default function SelfVsSelf() {
             </div>
           )}
         </div>
-
-        {/* ダメな行為（一番下、控えめ） */}
-        {!activeBadTask && (
-          <details className="mt-6">
-            <summary className="cursor-pointer list-none text-xs text-zinc-500 hover:text-zinc-300 tracking-wider flex items-center justify-center gap-2 py-2.5 border-t border-zinc-800/60 transition">
-              <AlertTriangle className="w-3.5 h-3.5 text-zinc-600" />
-              <span>弱さの記録</span>
-              <span className="text-zinc-700">▾</span>
-            </summary>
-            <div className="mt-2 bg-zinc-900/40 border border-zinc-800/60 rounded-xl p-3">
-              <div className="flex items-center justify-between mb-2">
-                <div className="text-[10px] text-zinc-500 tracking-wider">押すと計測開始 → ダメージ確定</div>
-                <button onClick={() => setShowBadSettings(true)} className="text-zinc-500 hover:text-white">
-                  <Settings className="w-3.5 h-3.5" />
-                </button>
-              </div>
-              <div className="flex flex-wrap gap-1.5 mb-2">
-                {badCategories.map(bc => (
-                  <button key={bc.id} onClick={() => startBadTask(bc.id)} className="px-2.5 py-1.5 rounded-lg bg-zinc-800/60 hover:bg-red-900/30 border border-zinc-800 hover:border-red-900 text-xs text-zinc-400 hover:text-red-300 transition active:scale-95">
-                    <Play className="w-3 h-3 inline mr-1 text-red-700" />{bc.emoji} {bc.label}
-                  </button>
-                ))}
-              </div>
-              
-              {/* 新規カスタム入力ボタン */}
-              <button onClick={startBadTaskCustom} className="w-full px-2.5 py-2 rounded-lg bg-red-900/20 hover:bg-red-900/40 border-2 border-dashed border-red-900/60 hover:border-red-600 text-xs text-red-400 hover:text-red-200 font-bold transition active:scale-95">
-                + その場で入力して記録
-              </button>
-            </div>
-          </details>
-        )}
 
         <div className="mt-8 text-center"><div className="text-zinc-700 text-xs tracking-[0.3em]">KEEP GOING</div></div>
       </div>
