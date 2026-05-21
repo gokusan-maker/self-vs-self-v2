@@ -633,6 +633,13 @@ export default function SelfVsSelf() {
   const isWinning = todayPower >= opponent.power && opponent.power > 0;
   const battleProgress = opponent.power > 0 ? Math.min(100, (todayPower / opponent.power) * 100) : 100;
   const rank = getRank();
+  const weeklyPoints = (() => {
+    const weekAgo = Date.now() - 6 * 86400000;
+    return todayPower + history.reduce((acc, h) => {
+      const t = new Date(h.date).getTime();
+      return (!isNaN(t) && t >= weekAgo) ? acc + (h.power || 0) : acc;
+    }, 0);
+  })();
   const damageRemaining = Math.max(0, todayDamageTotal - damageHealed);
 
   const triggerCoach = (key, intense = false) => {
@@ -852,8 +859,8 @@ export default function SelfVsSelf() {
     const targetMin = timeStrToMinutes(sleepGoal.wakeup);
     const { power, label } = getScheduleScore(actualMin, targetMin);
     setWakeTime({ time: timeStr, power, label, target: sleepGoal.wakeup });
-    setTodayPower(Math.max(0, todayPower + power));
-    setTotalPower(Math.max(0, totalPower + power));
+    setTodayPower(todayPower + power);
+    setTotalPower(totalPower + power);
     if (power >= 15) triggerCoach('wakeUpEarly', true);
     else if (power >= 5) triggerCoach('wakeUp', true);
     else triggerCoach('wakeUpLate', true);
@@ -867,8 +874,8 @@ export default function SelfVsSelf() {
     const targetMin = timeStrToMinutes(sleepGoal.bedtime);
     const { power, label } = getScheduleScore(actualMin, targetMin);
     setSleepTime({ time: timeStr, power, label, target: sleepGoal.bedtime });
-    setTodayPower(Math.max(0, todayPower + power));
-    setTotalPower(Math.max(0, totalPower + power));
+    setTodayPower(todayPower + power);
+    setTotalPower(totalPower + power);
     if (power >= 15) triggerCoach('sleepEarly', true);
     else if (power >= 5) triggerCoach('sleep', true);
     else triggerCoach('sleepLate', true);
@@ -879,16 +886,16 @@ export default function SelfVsSelf() {
     const p = wakeTime.power || 0;
     if (!confirm(`起床記録を取り消す？(-${p} POWER)`)) return;
     setWakeTime(null);
-    setTodayPower(Math.max(0, todayPower - p));
-    setTotalPower(Math.max(0, totalPower - p));
+    setTodayPower(todayPower - p);
+    setTotalPower(totalPower - p);
   };
   const resetSleep = () => {
     if (!sleepTime) return;
     const p = sleepTime.power || 0;
     if (!confirm(`就寝記録を取り消す？(-${p} POWER)`)) return;
     setSleepTime(null);
-    setTodayPower(Math.max(0, todayPower - p));
-    setTotalPower(Math.max(0, totalPower - p));
+    setTodayPower(todayPower - p);
+    setTotalPower(totalPower - p);
   };
 
   // ダメタスク選択 → まず「代わりの良いタスク」ポップアップを表示
@@ -996,7 +1003,8 @@ export default function SelfVsSelf() {
       overPenalty,
     }, ...todayDamages]);
     setTodayDamageTotal(todayDamageTotal + totalDamage);
-    setTodayPower(Math.max(0, todayPower - totalDamage));
+    setTodayPower(todayPower - totalDamage);
+    setTotalPower(totalPower - totalDamage);
     setActiveBadTask(null);
     
     if (overMin > 0) triggerCoach('badLong', true);
@@ -1081,10 +1089,10 @@ export default function SelfVsSelf() {
       <div className="sticky top-0 z-30 bg-black/80 backdrop-blur border-b border-zinc-800">
         <div className="max-w-2xl mx-auto px-4 py-3 flex items-center justify-between">
           <div>
-            <div className="text-xs text-zinc-500 tracking-widest">SELF vs SELF</div>
+            <div className="text-xs text-zinc-500 tracking-widest">VS 過去の自分</div>
             <div className="text-lg font-black tracking-tight">
-              <span className="text-red-500">{rank.name}</span>
-              <span className="text-zinc-600 text-sm ml-2">{totalPower} PWR</span>
+              <span className="text-red-500">今週 {weeklyPoints}pt</span>
+              <span className="text-zinc-600 text-sm ml-2">累計 {totalPower}</span>
             </div>
           </div>
           <div className="flex gap-2">
