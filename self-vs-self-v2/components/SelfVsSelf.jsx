@@ -1456,55 +1456,6 @@ export default function SelfVsSelf() {
               })}
             </div>
           )}
-
-          {completedTasks.length > 0 && (
-            <div className="pt-3 mt-3 border-t border-zinc-800">
-              <div className="text-[10px] text-zinc-500 tracking-[0.3em] mb-2 font-black uppercase">⬢ Completed ({completedTasks.length})</div>
-              {completedTasks.map(task => {
-                const cat = getCategory(task.categoryId);
-                const editing = editingDoneId === task.id;
-                return (
-                  <div key={task.id} className="bg-zinc-950 border border-zinc-800/60 p-3 flex items-center gap-2 mb-2">
-                    <div className="w-9 h-9 border-2 border-white flex items-center justify-center flex-shrink-0">
-                      <Check className="w-4 h-4 text-white" />
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      {editing ? (
-                        <input type="text" value={editDoneText} onChange={(e) => setEditDoneText(e.target.value)} onKeyDown={(e) => e.key === 'Enter' && saveEditDone()} autoFocus className="w-full bg-black border border-zinc-600 rounded px-2 py-1 text-white text-sm focus:border-white focus:outline-none" />
-                      ) : (
-                        <div className="font-bold line-through text-zinc-500 break-words tracking-wide">{task.text}</div>
-                      )}
-                      <div className="flex flex-wrap gap-1 mt-1">
-                        <span className="text-[9px] px-1.5 py-0.5 bg-zinc-800 text-zinc-400 tracking-wider uppercase">{cat.label}</span>
-                        <span className="text-[9px] px-1.5 py-0.5 bg-white text-black font-black tracking-wider font-mono">+{task.powerEarned || 0}</span>
-                        {task.durationMinutes !== null && task.durationMinutes !== undefined && (
-                          <span className="text-[9px] px-1.5 py-0.5 border border-zinc-600 text-zinc-300 font-black tracking-wider font-mono">⏱ {formatDuration(task.durationMinutes)}</span>
-                        )}
-                        {task.comboAtCompletion >= 2 && (
-                          <span className="text-[9px] px-1.5 py-0.5 bg-zinc-800 text-white font-black tracking-wider uppercase">×{task.comboAtCompletion} STREAK</span>
-                        )}
-                        {task.scheduledBonus > 0 && (
-                          <span className="text-[9px] px-1.5 py-0.5 bg-cyan-700 text-white font-black tracking-wider uppercase">📅 +{task.scheduledBonus} 約束達成</span>
-                        )}
-                        {task.earlyBonus > 0 && (
-                          <span className="text-[9px] px-1.5 py-0.5 bg-yellow-500 text-black font-black tracking-wider uppercase">⚡ +{task.earlyBonus} 前倒し</span>
-                        )}
-                      </div>
-                    </div>
-                    {editing ? (
-                      <button onClick={saveEditDone} className="text-[10px] px-2 py-1 rounded bg-white text-black font-black flex-shrink-0">保存</button>
-                    ) : (
-                      <div className="flex flex-col gap-1 flex-shrink-0">
-                        <button onClick={() => { setEditingDoneId(task.id); setEditDoneText(task.text); }} className="text-[10px] px-2 py-1 rounded border border-zinc-700 text-zinc-400 hover:text-white hover:border-zinc-500">編集</button>
-                        <button onClick={() => uncompleteTask(task.id)} className="text-[10px] px-2 py-1 rounded border border-zinc-700 text-zinc-400 hover:text-cyan-300 hover:border-cyan-700">戻す</button>
-                        <button onClick={() => deleteCompletedTask(task.id)} className="text-[10px] px-2 py-1 rounded border border-zinc-700 text-zinc-400 hover:text-red-400 hover:border-red-700">削除</button>
-                      </div>
-                    )}
-                  </div>
-                );
-              })}
-            </div>
-          )}
         </div>
 
         {/* タスクタイマー進行中 */}
@@ -1545,8 +1496,8 @@ export default function SelfVsSelf() {
         {!activeTaskTimer && !activeBadTask && (
           <div className="mb-4 rounded-2xl border-2 border-green-700 bg-gradient-to-br from-green-950/40 to-emerald-950/30 overflow-hidden shadow-lg">
             <div className="bg-gradient-to-r from-green-600 to-emerald-600 px-4 py-2 flex items-center justify-between">
-              <div className="text-xs text-white font-black tracking-wider">良いタスク</div>
-              <div className="text-[10px] text-green-100 tracking-wider">ワンタップでタイマー起動</div>
+              <div className="text-xs text-white font-black tracking-wider">良いタスク（今すぐやる）</div>
+              <div className="text-[10px] text-green-100 tracking-wider">思いついたらすぐ開始</div>
             </div>
             <div className="p-4">
               <input
@@ -1809,6 +1760,55 @@ export default function SelfVsSelf() {
           </div>
         )}
 
+
+          {completedTasks.length > 0 && (
+            <div className="pt-3 mt-3 border-t border-zinc-800">
+              <div className="text-[10px] text-zinc-500 tracking-[0.3em] mb-2 font-black uppercase">⬢ Completed ({completedTasks.length})</div>
+              {completedTasks.map(task => {
+                const cat = getCategory(task.categoryId);
+                const editing = editingDoneId === task.id;
+                return (
+                  <div key={task.id} className="bg-zinc-950 border border-zinc-800/60 p-3 flex items-center gap-2 mb-2">
+                    <div className="w-9 h-9 border-2 border-white flex items-center justify-center flex-shrink-0">
+                      <Check className="w-4 h-4 text-white" />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      {editing ? (
+                        <input type="text" value={editDoneText} onChange={(e) => setEditDoneText(e.target.value)} onKeyDown={(e) => e.key === 'Enter' && saveEditDone()} autoFocus className="w-full bg-black border border-zinc-600 rounded px-2 py-1 text-white text-sm focus:border-white focus:outline-none" />
+                      ) : (
+                        <div className="font-bold line-through text-zinc-500 break-words tracking-wide">{task.text}</div>
+                      )}
+                      <div className="flex flex-wrap gap-1 mt-1">
+                        <span className="text-[9px] px-1.5 py-0.5 bg-zinc-800 text-zinc-400 tracking-wider uppercase">{cat.label}</span>
+                        <span className="text-[9px] px-1.5 py-0.5 bg-white text-black font-black tracking-wider font-mono">+{task.powerEarned || 0}</span>
+                        {task.durationMinutes !== null && task.durationMinutes !== undefined && (
+                          <span className="text-[9px] px-1.5 py-0.5 border border-zinc-600 text-zinc-300 font-black tracking-wider font-mono">⏱ {formatDuration(task.durationMinutes)}</span>
+                        )}
+                        {task.comboAtCompletion >= 2 && (
+                          <span className="text-[9px] px-1.5 py-0.5 bg-zinc-800 text-white font-black tracking-wider uppercase">×{task.comboAtCompletion} STREAK</span>
+                        )}
+                        {task.scheduledBonus > 0 && (
+                          <span className="text-[9px] px-1.5 py-0.5 bg-cyan-700 text-white font-black tracking-wider uppercase">📅 +{task.scheduledBonus} 約束達成</span>
+                        )}
+                        {task.earlyBonus > 0 && (
+                          <span className="text-[9px] px-1.5 py-0.5 bg-yellow-500 text-black font-black tracking-wider uppercase">⚡ +{task.earlyBonus} 前倒し</span>
+                        )}
+                      </div>
+                    </div>
+                    {editing ? (
+                      <button onClick={saveEditDone} className="text-[10px] px-2 py-1 rounded bg-white text-black font-black flex-shrink-0">保存</button>
+                    ) : (
+                      <div className="flex flex-col gap-1 flex-shrink-0">
+                        <button onClick={() => { setEditingDoneId(task.id); setEditDoneText(task.text); }} className="text-[10px] px-2 py-1 rounded border border-zinc-700 text-zinc-400 hover:text-white hover:border-zinc-500">編集</button>
+                        <button onClick={() => uncompleteTask(task.id)} className="text-[10px] px-2 py-1 rounded border border-zinc-700 text-zinc-400 hover:text-cyan-300 hover:border-cyan-700">戻す</button>
+                        <button onClick={() => deleteCompletedTask(task.id)} className="text-[10px] px-2 py-1 rounded border border-zinc-700 text-zinc-400 hover:text-red-400 hover:border-red-700">削除</button>
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+          )}
         <div className="mt-8 text-center"><div className="text-zinc-700 text-xs tracking-[0.3em]">KEEP GOING</div></div>
       </div>
 
