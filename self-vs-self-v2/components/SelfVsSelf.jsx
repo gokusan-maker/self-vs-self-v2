@@ -724,20 +724,33 @@ export default function SelfVsSelf() {
     if (activeTaskTimer) return;
     setActiveTaskTimer({ taskId: id, startedAt: Date.now() });
     triggerCoach('taskStart');
+    // 着手ボーナス（初回スタート時のみ）
+    const t = tasks.find(x => x.id === id);
+    if (t && !t.partialDone && !t.completed) {
+      const startBonus = Math.max(2, Math.round(DIFFICULTIES[t.difficulty].power * 0.2));
+      setTodayPower(todayPower + startBonus);
+      setTotalPower(totalPower + startBonus);
+      setTasks(tasks.map(x => x.id === id ? { ...x, partialDone: true, partialPower: startBonus } : x));
+    }
   };
 
   // クイックスタート（タスクを作って即タイマー開始）
   const quickStart = () => {
     if (!quickText.trim() || activeTaskTimer) return;
+    const startBonus = Math.max(2, Math.round(DIFFICULTIES[quickDifficulty].power * 0.2));
     const task = {
       id: Date.now().toString(),
       text: quickText.trim(),
       categoryId: quickCategoryId,
       difficulty: quickDifficulty,
       completed: false,
+      partialDone: true,
+      partialPower: startBonus,
     };
     setTasks([task, ...tasks]);
     setActiveTaskTimer({ taskId: task.id, startedAt: Date.now() });
+    setTodayPower(todayPower + startBonus);
+    setTotalPower(totalPower + startBonus);
     addToHistory(quickText, quickCategoryId, quickDifficulty);
     setQuickText('');
     triggerCoach('taskStart', true);
@@ -870,15 +883,16 @@ export default function SelfVsSelf() {
     }
   };
 
-  // 途中まで（未完了）でも記録 — 手を付けただけでプラス
+  // 未完了で終了 — 着手ボーナスを付与し、タスクは一覧に残す（完了にはしない）
   const partialComplete = (id) => {
     const t = tasks.find(x => x.id === id);
     if (!t || t.completed) return;
     if (activeTaskTimer && activeTaskTimer.taskId === id) setActiveTaskTimer(null);
+    if (t.partialDone) return;
     const partialPower = Math.max(2, Math.round(DIFFICULTIES[t.difficulty].power * 0.2));
     setTodayPower(todayPower + partialPower);
     setTotalPower(totalPower + partialPower);
-    setTasks(tasks.map(x => x.id === id ? { ...x, completed: true, partial: true, powerEarned: partialPower } : x));
+    setTasks(tasks.map(x => x.id === id ? { ...x, partialDone: true, partialPower } : x));
     triggerCoach('smallWin');
   };
 
@@ -1022,15 +1036,20 @@ export default function SelfVsSelf() {
   // 代替提案ポップアップから良いタスクをワンクリック開始
   const startGoodFromRedirect = (text, categoryId) => {
     if (activeTaskTimer) { setRedirectPopup(null); return; }
+    const startBonus = Math.max(2, Math.round(DIFFICULTIES['medium'].power * 0.2));
     const task = {
       id: Date.now().toString(),
       text: text.trim(),
       categoryId: categoryId || (categories[0] && categories[0].id) || 'life',
       difficulty: 'medium',
       completed: false,
+      partialDone: true,
+      partialPower: startBonus,
     };
     setTasks([task, ...tasks]);
     setActiveTaskTimer({ taskId: task.id, startedAt: Date.now() });
+    setTodayPower(todayPower + startBonus);
+    setTotalPower(totalPower + startBonus);
     addToHistory(text, task.categoryId, 'medium');
     setRedirectPopup(null);
     triggerCoach('taskStart', true);
@@ -1244,7 +1263,10 @@ export default function SelfVsSelf() {
         <div className="mb-4 rounded-2xl border border-zinc-800 bg-zinc-900/50 p-4">
           {(() => {
             const evts = [];
-            completedTasks.forEach(t => evts.push({ label: t.text, points: t.powerEarned || 0 }));
+            tasks.forEach(t => {
+              if (t.completed) evts.push({ label: t.text, points: (t.powerEarned || 0) + (t.partialDone ? (t.partialPower || 0) : 0) });
+              else if (t.partialDone) evts.push({ label: t.text + '（着手）', points: t.partialPower || 0 });
+            });
             if (wakeTime) evts.push({ label: `${wakeTime.time} 起床`, points: wakeTime.power || 0 });
             if (sleepTime) evts.push({ label: `${sleepTime.time} 就寝`, points: sleepTime.power || 0 });
             todayDamages.forEach(d => { const disp = getBadDisplay(d); evts.push({ label: `${disp.emoji} ${disp.label} ${formatDuration(d.minutes)}`, points: -(d.damage || 0) }); });
@@ -1269,12 +1291,21 @@ export default function SelfVsSelf() {
                         : <span className="text-red-400 font-bold">マイナス優勢 — 差 −{minusTotal - plusTotal}</span>}
                     </div>
                     <div className="mt-2 border-t border-zinc-800 pt-2 space-y-0.5">
-                      {evts.map((e, i) => (
-                        <div key={i} className="flex justify-between text-xs">
-                          <span className="text-zinc-300 truncate mr-2"><span className={e.points >= 0 ? 'text-green-400' : 'text-red-400'}>●</span> {e.label}</span>
-                          <span className={`font-mono flex-shrink-0 ${e.points >= 0 ? 'text-green-400' : 'text-red-400'}`}>{e.points >= 0 ? '+' : '−'}{Math.abs(e.points)}</span>
-                        </div>
-                      ))}
+                      {(() => {
+                        const plus = evts.filter(e => e.points >= 0);
+                        const minus = evts.filter(e => e.points < 0);
+                        const rows = Math.max(plus.length, minus.length);
+                        return Array.from({ length: rows }).map((_, i) => (
+                          <div key={i} className="flex justify-between items-center text-xs gap-3">
+                            <span className="text-zinc-300 truncate min-w-0">
+                              {plus[i] && <><span className="text-green-400">●</span> {plus[i].label} <span className="text-green-400 font-mono">+{plus[i].points}</span></>}
+                            </span>
+                            <span className="text-red-400 truncate min-w-0 text-right">
+                              {minus[i] && <>{minus[i].label} <span className="font-mono">−{Math.abs(minus[i].points)}</span> <span>●</span></>}
+                            </span>
+                          </div>
+                        ));
+                      })()}
                     </div>
                   </>
                 )}
@@ -1284,8 +1315,11 @@ export default function SelfVsSelf() {
         </div>
 
         {/* タスク追加 */}
-        <div className="border border-zinc-800 bg-zinc-950 mb-4">
-          <div className="border-b border-zinc-800 px-4 py-2 text-[10px] text-zinc-500 font-black tracking-[0.3em] uppercase">スケジュールを作成</div>
+        <div className="mb-6 rounded-2xl border-2 border-blue-600 bg-gradient-to-br from-blue-950/40 to-zinc-950/30 overflow-hidden shadow-lg">
+          <div className="bg-gradient-to-r from-blue-600 to-cyan-600 px-4 py-2.5 flex items-center gap-2">
+            <span className="text-base">📅</span>
+            <span className="text-sm text-white font-black tracking-wider">スケジュール作成</span>
+          </div>
           <div className="p-4">
             <input type="text" value={newTask} onChange={(e) => setNewTask(e.target.value)} onKeyDown={(e) => e.key === 'Enter' && addTask()} placeholder="ENTER TASK..." className="w-full bg-black border border-zinc-800 px-3 py-2.5 mb-2 focus:border-white focus:outline-none placeholder-zinc-700 tracking-wider uppercase text-sm" />
             
@@ -1347,7 +1381,7 @@ export default function SelfVsSelf() {
         </div>
 
         {/* タスクリスト */}
-        <div className="space-y-2">
+        <div className="space-y-2 mb-8">
           {activeTasks.length === 0 && completedTasks.length === 0 && failedTasks.length === 0 && (
             <div className="border border-dashed border-zinc-800 p-8 text-center">
               <div className="text-zinc-600 text-[10px] tracking-[0.3em] uppercase font-black">No Tasks Queued</div>
@@ -1408,6 +1442,7 @@ export default function SelfVsSelf() {
                   <div className="flex flex-wrap gap-1 mt-1">
                     {isScheduled && <span className="text-[9px] px-1.5 py-0.5 rounded bg-cyan-700 text-white font-black tracking-wider uppercase">📅 予約済み</span>}
                     <span className={`text-[9px] px-1.5 py-0.5 rounded bg-gradient-to-r ${cat.color} text-white font-bold`}>{cat.emoji} {cat.label}</span>
+                    {task.partialDone && <span className="text-[9px] px-1.5 py-0.5 rounded bg-amber-900/50 border border-amber-700 text-amber-300 font-bold">着手 +{task.partialPower}</span>}
                     <span className="text-[9px] px-1.5 py-0.5 rounded border border-zinc-700 text-zinc-400 font-black tracking-wider">+{projectedPower}</span>
                     {bonus.label && <span className="text-[9px] px-1.5 py-0.5 rounded bg-orange-900/40 border border-orange-700 text-orange-300 font-bold">{bonus.label} x{bonus.mult}</span>}
                     {isScheduled && <span className="text-[9px] px-1.5 py-0.5 rounded bg-cyan-900/50 text-cyan-300 font-black tracking-wider">+10 実行</span>}
