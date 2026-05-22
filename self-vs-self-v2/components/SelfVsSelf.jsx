@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Plus, Check, Trash2, Skull, Crown, Flame, X, Settings, Edit2, Swords, Trophy, Sunrise, Moon, XCircle, Play, Square, AlertTriangle, Zap, Heart, Timer, CalendarPlus, Sun } from 'lucide-react';
 
 const STORAGE_KEY = 'self_vs_self_v8';
@@ -409,7 +409,8 @@ export default function SelfVsSelf() {
   const [currentBadSeconds, setCurrentBadSeconds] = useState(0);
   const [activeTaskTimer, setActiveTaskTimer] = useState(null); // {taskId, startedAt}
   const [currentTaskTimer, setCurrentTaskTimer] = useState(0);
-  const [currentTaskSeconds, setCurrentTaskSeconds] = useState(0); // 秒単位（リアルタイム表示用）
+  const [currentTaskSeconds, setCurrentTaskSeconds] = useState(0);
+  const activeTimerRef = useRef(null); // 秒単位（リアルタイム表示用）
   const [sleepGoal, setSleepGoal] = useState(DEFAULT_SLEEP_GOAL); // { bedtime, wakeup } "HH:MM"
   const [editingSleepGoal, setEditingSleepGoal] = useState(false);
   // 悪いタスク開始前の代替提案ポップアップ
@@ -604,6 +605,15 @@ export default function SelfVsSelf() {
     update();
     const interval = setInterval(update, 1000);
     return () => clearInterval(interval);
+  }, [activeTaskTimer]);
+
+  // タスク開始時、実行中カードへ自動スクロール
+  useEffect(() => {
+    if (activeTaskTimer && activeTimerRef.current) {
+      setTimeout(() => {
+        if (activeTimerRef.current) activeTimerRef.current.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      }, 100);
+    }
   }, [activeTaskTimer]);
 
   useEffect(() => {
@@ -1248,6 +1258,69 @@ export default function SelfVsSelf() {
           })()}
         </div>
 
+        {/* タスク追加 */}
+        <div className="border border-zinc-800 bg-zinc-950 mb-4">
+          <div className="border-b border-zinc-800 px-4 py-2 text-[10px] text-zinc-500 font-black tracking-[0.3em] uppercase">スケジュールを作成</div>
+          <div className="p-4">
+            <input type="text" value={newTask} onChange={(e) => setNewTask(e.target.value)} onKeyDown={(e) => e.key === 'Enter' && addTask()} placeholder="ENTER TASK..." className="w-full bg-black border border-zinc-800 px-3 py-2.5 mb-2 focus:border-white focus:outline-none placeholder-zinc-700 tracking-wider uppercase text-sm" />
+            
+            {taskHistory.length > 0 && (() => {
+              const filtered = newTask.trim()
+                ? taskHistory.filter(h => h.text.toLowerCase().includes(newTask.trim().toLowerCase()) && h.text.toLowerCase() !== newTask.trim().toLowerCase())
+                : taskHistory;
+              if (filtered.length === 0) return null;
+              return (
+                <div className="mb-3 flex flex-wrap gap-1 max-h-24 overflow-y-auto">
+                  {filtered.slice(0, 8).map((h, i) => {
+                    const cat = getCategory(h.categoryId);
+                    return (
+                      <button
+                        key={i}
+                        onClick={() => {
+                          setNewTask(h.text);
+                          setNewCategoryId(h.categoryId);
+                          setNewDifficulty(h.difficulty);
+                        }}
+                        className="px-2 py-1 border border-zinc-800 hover:border-zinc-600 bg-zinc-900 hover:bg-zinc-800 text-[10px] text-zinc-400 hover:text-white transition flex items-center gap-1 tracking-wider"
+                      >
+                        <span className="text-zinc-600">↻</span>
+                        <span className="truncate max-w-[120px]">{h.text}</span>
+                      </button>
+                    );
+                  })}
+                </div>
+              );
+            })()}
+            
+            <div className="flex flex-wrap gap-1.5 mb-3">
+              {categories.map(cat => (
+                <button key={cat.id} onClick={() => setNewCategoryId(cat.id)} className={`px-3 py-2 rounded-lg text-sm font-bold transition border-2 ${newCategoryId === cat.id ? `bg-gradient-to-r ${cat.color} text-white border-transparent shadow-lg scale-105` : 'bg-zinc-800 text-zinc-300 border-zinc-700 hover:border-zinc-500'}`}>
+                  {cat.emoji} {cat.label}
+                </button>
+              ))}
+              <button onClick={() => { setShowSettings(true); openCategoryEditor(); }} className="px-3 py-2 rounded-lg text-zinc-500 border-2 border-dashed border-zinc-700 hover:text-white hover:border-zinc-500">
+                <Plus className="w-4 h-4" />
+              </button>
+            </div>
+            <div className="flex gap-1.5 mb-3">
+              {Object.entries(DIFFICULTIES).map(([k, v]) => (
+                <button key={k} onClick={() => setNewDifficulty(k)} className={`flex-1 py-2 rounded-lg text-xs font-bold border-2 transition ${newDifficulty === k ? v.color + ' scale-105 shadow-md' : 'bg-zinc-800 text-zinc-400 border-zinc-700'}`}>
+                  {v.label} +{v.power}
+                </button>
+              ))}
+            </div>
+            <div className="flex gap-2">
+              <button onClick={() => addTask(false)} disabled={!newTask.trim()} className="flex-1 bg-gradient-to-r from-red-600 to-orange-600 hover:from-red-500 hover:to-orange-500 text-white font-black tracking-wider py-3 rounded-lg disabled:opacity-30 disabled:cursor-not-allowed transition active:scale-95 shadow-md">
+                ➕ 今日のタスク
+              </button>
+              <button onClick={() => addTask(true)} disabled={!newTask.trim()} className="flex-1 bg-gradient-to-r from-blue-600 to-cyan-600 hover:from-blue-500 hover:to-cyan-500 text-white font-black tracking-wider py-3 rounded-lg disabled:opacity-30 disabled:cursor-not-allowed transition active:scale-95 shadow-md flex items-center justify-center gap-1">
+                <CalendarPlus className="w-4 h-4" />
+                明日 +5
+              </button>
+            </div>
+          </div>
+        </div>
+
         {/* タスクタイマー進行中 */}
         {activeTaskTimer && (() => {
           const t = tasks.find(x => x.id === activeTaskTimer.taskId);
@@ -1255,7 +1328,7 @@ export default function SelfVsSelf() {
           const cat = getCategory(t.categoryId);
           const dBonus = getDurationBonus(currentTaskTimer);
           return (
-            <div className="mb-4 rounded-2xl border-2 border-green-500 bg-gradient-to-br from-green-900/30 to-emerald-950/30 p-4">
+            <div ref={activeTimerRef} className="mb-4 rounded-2xl border-2 border-green-500 bg-gradient-to-br from-green-900/30 to-emerald-950/30 p-4">
               <div className="flex items-center gap-3 mb-2">
                 <Timer className="w-8 h-8 text-green-400 flex-shrink-0 animate-pulse" />
                 <div className="flex-1 min-w-0">
@@ -1549,69 +1622,6 @@ export default function SelfVsSelf() {
             </div>
           </div>
         )}
-
-        {/* タスク追加 */}
-        <div className="border border-zinc-800 bg-zinc-950 mb-4">
-          <div className="border-b border-zinc-800 px-4 py-2 text-[10px] text-zinc-500 font-black tracking-[0.3em] uppercase">スケジュールを作成</div>
-          <div className="p-4">
-            <input type="text" value={newTask} onChange={(e) => setNewTask(e.target.value)} onKeyDown={(e) => e.key === 'Enter' && addTask()} placeholder="ENTER TASK..." className="w-full bg-black border border-zinc-800 px-3 py-2.5 mb-2 focus:border-white focus:outline-none placeholder-zinc-700 tracking-wider uppercase text-sm" />
-            
-            {taskHistory.length > 0 && (() => {
-              const filtered = newTask.trim()
-                ? taskHistory.filter(h => h.text.toLowerCase().includes(newTask.trim().toLowerCase()) && h.text.toLowerCase() !== newTask.trim().toLowerCase())
-                : taskHistory;
-              if (filtered.length === 0) return null;
-              return (
-                <div className="mb-3 flex flex-wrap gap-1 max-h-24 overflow-y-auto">
-                  {filtered.slice(0, 8).map((h, i) => {
-                    const cat = getCategory(h.categoryId);
-                    return (
-                      <button
-                        key={i}
-                        onClick={() => {
-                          setNewTask(h.text);
-                          setNewCategoryId(h.categoryId);
-                          setNewDifficulty(h.difficulty);
-                        }}
-                        className="px-2 py-1 border border-zinc-800 hover:border-zinc-600 bg-zinc-900 hover:bg-zinc-800 text-[10px] text-zinc-400 hover:text-white transition flex items-center gap-1 tracking-wider"
-                      >
-                        <span className="text-zinc-600">↻</span>
-                        <span className="truncate max-w-[120px]">{h.text}</span>
-                      </button>
-                    );
-                  })}
-                </div>
-              );
-            })()}
-            
-            <div className="flex flex-wrap gap-1.5 mb-3">
-              {categories.map(cat => (
-                <button key={cat.id} onClick={() => setNewCategoryId(cat.id)} className={`px-3 py-2 rounded-lg text-sm font-bold transition border-2 ${newCategoryId === cat.id ? `bg-gradient-to-r ${cat.color} text-white border-transparent shadow-lg scale-105` : 'bg-zinc-800 text-zinc-300 border-zinc-700 hover:border-zinc-500'}`}>
-                  {cat.emoji} {cat.label}
-                </button>
-              ))}
-              <button onClick={() => { setShowSettings(true); openCategoryEditor(); }} className="px-3 py-2 rounded-lg text-zinc-500 border-2 border-dashed border-zinc-700 hover:text-white hover:border-zinc-500">
-                <Plus className="w-4 h-4" />
-              </button>
-            </div>
-            <div className="flex gap-1.5 mb-3">
-              {Object.entries(DIFFICULTIES).map(([k, v]) => (
-                <button key={k} onClick={() => setNewDifficulty(k)} className={`flex-1 py-2 rounded-lg text-xs font-bold border-2 transition ${newDifficulty === k ? v.color + ' scale-105 shadow-md' : 'bg-zinc-800 text-zinc-400 border-zinc-700'}`}>
-                  {v.label} +{v.power}
-                </button>
-              ))}
-            </div>
-            <div className="flex gap-2">
-              <button onClick={() => addTask(false)} disabled={!newTask.trim()} className="flex-1 bg-gradient-to-r from-red-600 to-orange-600 hover:from-red-500 hover:to-orange-500 text-white font-black tracking-wider py-3 rounded-lg disabled:opacity-30 disabled:cursor-not-allowed transition active:scale-95 shadow-md">
-                ➕ 今日のタスク
-              </button>
-              <button onClick={() => addTask(true)} disabled={!newTask.trim()} className="flex-1 bg-gradient-to-r from-blue-600 to-cyan-600 hover:from-blue-500 hover:to-cyan-500 text-white font-black tracking-wider py-3 rounded-lg disabled:opacity-30 disabled:cursor-not-allowed transition active:scale-95 shadow-md flex items-center justify-center gap-1">
-                <CalendarPlus className="w-4 h-4" />
-                明日 +5
-              </button>
-            </div>
-          </div>
-        </div>
 
         {/* タスクリスト */}
         <div className="space-y-2">
