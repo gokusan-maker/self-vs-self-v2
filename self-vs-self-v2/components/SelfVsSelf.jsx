@@ -7,7 +7,7 @@ const STORAGE_KEY = 'self_vs_self_v8';
 
 const DEFAULT_CATEGORIES = [
   { id: 'life', label: '生活', emoji: '🏠', color: 'from-yellow-500 to-amber-600' },
-  { id: 'body', label: '身体', emoji: '💪', color: 'from-red-600 to-orange-600' },
+  { id: 'body', label: '健康', emoji: '💪', color: 'from-red-600 to-orange-600' },
   { id: 'work', label: '仕事', emoji: '💼', color: 'from-blue-600 to-indigo-600' },
   { id: 'study', label: '勉強', emoji: '📚', color: 'from-green-600 to-emerald-600' },
 ];
@@ -360,6 +360,10 @@ const formatSchedDate = (iso) => {
   return `${m}/${d}(${w})`;
 };
 
+// 繰り返し（定期タスク）
+const REPEAT_OPTIONS = [['none', 'なし'], ['daily', '毎日'], ['weekly', '毎週']];
+const repeatLabel = (r) => (r === 'daily' ? '🔁 毎日' : r === 'weekly' ? '🔁 毎週' : '');
+
 const formatDuration = (minutes) => {
   if (minutes < 1) return '0分';
   if (minutes < 60) return `${minutes}分`;
@@ -439,6 +443,7 @@ export default function SelfVsSelf() {
   const [newCategoryId, setNewCategoryId] = useState('life');
   const [newDifficulty, setNewDifficulty] = useState('medium');
   const [newScheduledDate, setNewScheduledDate] = useState(''); // '' = 今日 / YYYY-MM-DD = 予定日
+  const [newRepeat, setNewRepeat] = useState('none'); // none | daily | weekly（繰り返し）
   const [appNotice, setAppNotice] = useState(null); // LINE風アプリ内通知バナー { id, title, body }
   
   // クイックスタート用
@@ -519,7 +524,7 @@ export default function SelfVsSelf() {
               newStreak = 0;
             }
 
-            setCategories(d.categories || DEFAULT_CATEGORIES);
+            setCategories((d.categories || DEFAULT_CATEGORIES).map(c => (c.id === 'body' && c.label === '身体') ? { ...c, label: '健康' } : c));
             setBadCategories(d.badCategories || DEFAULT_BAD_CATEGORIES);
             // 未完了タスクは持ち越し。forTomorrow=trueだったタスクは「今日が予定日」になる
             setTasks((d.tasks || [])
@@ -559,7 +564,7 @@ export default function SelfVsSelf() {
             setActiveTaskTimer(null);
             setSleepGoal(d.sleepGoal || DEFAULT_SLEEP_GOAL);
           } else {
-            setCategories(d.categories || DEFAULT_CATEGORIES);
+            setCategories((d.categories || DEFAULT_CATEGORIES).map(c => (c.id === 'body' && c.label === '身体') ? { ...c, label: '健康' } : c));
             setBadCategories(d.badCategories || DEFAULT_BAD_CATEGORIES);
             setTasks(d.tasks || []);
             setTodayPower(d.todayPower || 0);
@@ -751,7 +756,11 @@ export default function SelfVsSelf() {
   };
 
   // タスクが今日のポイントに加えた分（削除・失敗・取り消し時に差し引く用）
-  const reversibleTaskPoints = (t) => (t.completed ? (t.powerEarned || 0) : 0) + (t.partialDone ? (t.partialPower || 0) : 0) + (t.planBonus || 0);
+  // タスクが今日のポイントに加えた実額。gained を持つならそれが正（旧データはフォールバック計算）
+  const reversibleTaskPoints = (t) => {
+    if (typeof t.gained === 'number') return t.gained;
+    return (t.completed ? (t.powerEarned || 0) : 0) + (t.partialDone ? (t.partialPower || 0) : 0) + (t.planBonus || 0);
+  };
 
   const addTask = (scheduledDate = '') => {
     if (!newTask.trim() || categories.length === 0) return;
@@ -766,11 +775,14 @@ export default function SelfVsSelf() {
       scheduledDate: sd || null,            // 予定日（YYYY-MM-DD）。null/今日 は当日タスク
       forTomorrow: isFuture,                // 互換用
       planBonus: isFuture ? 5 : 0,
+      repeat: newRepeat,                    // none | daily | weekly
+      gained: isFuture ? 5 : 0,             // このタスクが加算したポイント実額
     };
     setTasks([task, ...tasks]);
     addToHistory(newTask, newCategoryId, newDifficulty);
     setNewTask('');
     setNewScheduledDate('');
+    setNewRepeat('none');
 
     if (isFuture) {
       // 計画ボーナス +5 PWR（先に予定を立てた報酬）
@@ -793,7 +805,7 @@ export default function SelfVsSelf() {
       const startBonus = Math.max(2, Math.round(DIFFICULTIES[t.difficulty].power * 0.2));
       setTodayPower(todayPower + startBonus);
       setTotalPower(totalPower + startBonus);
-      setTasks(tasks.map(x => x.id === id ? { ...x, partialDone: true, partialPower: startBonus } : x));
+      setTasks(tasks.map(x => x.id === id ? { ...x, partialDone: true, partialPower: startBonus, gained: (x.gained || 0) + startBonus } : x));
     }
   };
 
@@ -809,6 +821,7 @@ export default function SelfVsSelf() {
       completed: false,
       partialDone: true,
       partialPower: startBonus,
+      gained: startBonus,
     };
     setTasks([task, ...tasks]);
     setActiveTaskTimer({ taskId: task.id, startedAt: Date.now() });
@@ -885,7 +898,7 @@ export default function SelfVsSelf() {
 
     setTodayPower(newTodayPower);
     setTotalPower(newTotalPower);
-    setTasks(tasks.map(x => x.id === id ? {
+    const updatedTasks = tasks.map(x => x.id === id ? {
       ...x,
       completed: true,
       comboAtCompletion: newCombo,
@@ -896,7 +909,26 @@ export default function SelfVsSelf() {
       earlyBonus,
       longerBonus: longerBonus.bonus,
       longerLabel: longerBonus.label,
-    } : x));
+      gained: (x.gained || 0) + finalPower,
+    } : x);
+    // 定期タスクなら次回分を自動生成（毎日→翌日 / 毎週→7日後）
+    if (t.repeat && t.repeat !== 'none') {
+      const nextDate = t.repeat === 'weekly' ? dateAfter(7) : dateAfter(1);
+      setTasks([{
+        id: 'rep_' + Date.now(),
+        text: t.text,
+        categoryId: t.categoryId,
+        difficulty: t.difficulty,
+        completed: false,
+        scheduledDate: nextDate,
+        forTomorrow: true,
+        planBonus: 0,
+        repeat: t.repeat,
+        gained: 0,
+      }, ...updatedTasks]);
+    } else {
+      setTasks(updatedTasks);
+    }
     setTaskCombos({ ...taskCombos, [key]: { count: newCombo, lastDate: today } });
     
     // 過去最長時間を更新
@@ -956,7 +988,7 @@ export default function SelfVsSelf() {
     const partialPower = Math.max(2, Math.round(DIFFICULTIES[t.difficulty].power * 0.2));
     setTodayPower(todayPower + partialPower);
     setTotalPower(totalPower + partialPower);
-    setTasks(tasks.map(x => x.id === id ? { ...x, partialDone: true, partialPower } : x));
+    setTasks(tasks.map(x => x.id === id ? { ...x, partialDone: true, partialPower, gained: (x.gained || 0) + partialPower } : x));
     triggerCoach('smallWin');
   };
 
@@ -966,7 +998,7 @@ export default function SelfVsSelf() {
     if (activeTaskTimer && activeTaskTimer.taskId === id) setActiveTaskTimer(null);
     const rev = reversibleTaskPoints(t);
     if (rev !== 0) { setTodayPower(todayPower - rev); setTotalPower(totalPower - rev); }
-    setTasks(tasks.map(x => x.id === id ? { ...x, failed: true, partialDone: false, planBonus: 0 } : x));
+    setTasks(tasks.map(x => x.id === id ? { ...x, failed: true, partialDone: false, planBonus: 0, gained: 0 } : x));
     setFailedCount(failedCount + 1);
     const key = getTaskKey(t.text, t.categoryId);
     if (taskCombos[key]) {
@@ -1012,7 +1044,7 @@ export default function SelfVsSelf() {
       try { installPrompt.prompt(); await installPrompt.userChoice; } catch (e) {}
       setInstallPrompt(null);
     } else {
-      alert('このブラウザでは、メニューから「ホーム画面に追加」または「アプリをインストール」を選んでください。\n\niPhone: Safariの共有ボタン →「ホーム画面に追加」\nAndroid: Chromeのメニュー(⋮) →「アプリをインストール」');
+      alert('このブラウザでは、メニューから「ホーム画面に追加」または「アプリをインストール」を選んでください。\n\niPhone: Safariの共有ボタン →「ホーム画面に追加」\nAndroid: Chromeのメニュー(\u22ee) →「アプリをインストール」');
     }
   };
 
@@ -1142,6 +1174,7 @@ export default function SelfVsSelf() {
       completed: false,
       partialDone: true,
       partialPower: startBonus,
+      gained: startBonus,
     };
     setTasks([task, ...tasks]);
     setActiveTaskTimer({ taskId: task.id, startedAt: Date.now() });
@@ -1293,8 +1326,14 @@ export default function SelfVsSelf() {
   const deleteBadCategory = (id) => setBadCategories(badCategories.filter(c => c.id !== id));
 
   const _ti = todayISO();
-  const futureTasks = tasks.filter(t => !t.completed && !t.failed && t.scheduledDate && t.scheduledDate > _ti);
-  const activeTasks = tasks.filter(t => !t.completed && !t.failed && !(t.scheduledDate && t.scheduledDate > _ti));
+  // 予定日（未設定は今日扱い）で昇順 = 日付が近い順
+  const _byDate = (a, b) => {
+    const da = a.scheduledDate || _ti;
+    const db = b.scheduledDate || _ti;
+    return da < db ? -1 : da > db ? 1 : 0;
+  };
+  const futureTasks = tasks.filter(t => !t.completed && !t.failed && t.scheduledDate && t.scheduledDate > _ti).sort(_byDate);
+  const activeTasks = tasks.filter(t => !t.completed && !t.failed && !(t.scheduledDate && t.scheduledDate > _ti)).sort(_byDate);
   const completedTasks = tasks.filter(t => t.completed);
   const failedTasks = tasks.filter(t => t.failed);
 
@@ -1525,6 +1564,15 @@ export default function SelfVsSelf() {
                 />
               )}
             </div>
+            {/* 繰り返し（定期タスク） */}
+            <div className="flex flex-wrap items-center gap-1.5 mb-2">
+              <span className="text-[10px] text-zinc-500 font-bold mr-0.5">🔁 繰り返し</span>
+              {REPEAT_OPTIONS.map(([val, label]) => (
+                <button key={val} onClick={() => setNewRepeat(val)} className={`px-3 py-1.5 rounded-lg text-[11px] font-bold border-2 transition ${newRepeat === val ? 'bg-gradient-to-r from-purple-600 to-pink-600 text-white border-transparent shadow-md scale-105' : 'bg-zinc-800 text-zinc-400 border-zinc-700 hover:border-zinc-500'}`}>
+                  {label}
+                </button>
+              ))}
+            </div>
             <div className="flex gap-2">
               <button onClick={() => addTask(newScheduledDate)} disabled={!newTask.trim()} className={`flex-1 text-white font-black tracking-wider py-3 rounded-lg disabled:opacity-30 disabled:cursor-not-allowed transition active:scale-95 shadow-md flex items-center justify-center gap-1.5 ${newScheduledDate && newScheduledDate > todayISO() ? 'bg-gradient-to-r from-blue-600 to-cyan-600 hover:from-blue-500 hover:to-cyan-500' : 'bg-gradient-to-r from-red-600 to-orange-600 hover:from-red-500 hover:to-orange-500'}`}>
                 {newScheduledDate && newScheduledDate > todayISO() ? (
@@ -1571,6 +1619,7 @@ export default function SelfVsSelf() {
                             <div className="flex flex-wrap gap-1 mt-1">
                               <span className={`text-[9px] px-1.5 py-0.5 rounded bg-gradient-to-r ${cat.color} text-white font-bold`}>{cat.emoji} {cat.label}</span>
                               <span className="text-[9px] px-1.5 py-0.5 rounded border border-cyan-600 text-cyan-200 font-black tracking-wider">予定日: +{diff.power}</span>
+                              {task.repeat && task.repeat !== 'none' && <span className="text-[9px] px-1.5 py-0.5 rounded bg-purple-700 text-white font-black tracking-wider">{repeatLabel(task.repeat)}</span>}
                               <span className="text-[9px] px-1.5 py-0.5 rounded bg-yellow-500 text-black font-black tracking-wider">⚡ 今やる +15</span>
                             </div>
                           </div>
@@ -1606,6 +1655,7 @@ export default function SelfVsSelf() {
                   <div className="font-bold text-white break-words tracking-wide">{task.text}</div>
                   <div className="flex flex-wrap gap-1 mt-1">
                     {isScheduled && <span className="text-[9px] px-1.5 py-0.5 rounded bg-cyan-700 text-white font-black tracking-wider uppercase">📅 予約済み</span>}
+                    {task.repeat && task.repeat !== 'none' && <span className="text-[9px] px-1.5 py-0.5 rounded bg-purple-700 text-white font-black tracking-wider">{repeatLabel(task.repeat)}</span>}
                     <span className={`text-[9px] px-1.5 py-0.5 rounded bg-gradient-to-r ${cat.color} text-white font-bold`}>{cat.emoji} {cat.label}</span>
                     {task.partialDone && <span className="text-[9px] px-1.5 py-0.5 rounded bg-amber-900/50 border border-amber-700 text-amber-300 font-bold">着手 +{task.partialPower}</span>}
                     <span className="text-[9px] px-1.5 py-0.5 rounded border border-zinc-700 text-zinc-400 font-black tracking-wider">+{projectedPower}</span>
