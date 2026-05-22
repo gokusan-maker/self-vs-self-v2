@@ -588,8 +588,14 @@ export default function SelfVsSelf() {
     let warned = false, over = false;
     const notify = (title, body) => {
       try {
-        if (typeof window !== 'undefined' && 'Notification' in window && Notification.permission === 'granted') {
-          new Notification(title, { body });
+        if (typeof window === 'undefined' || !('Notification' in window) || Notification.permission !== 'granted') return;
+        const opts = { body, icon: '/icon-192.png', badge: '/icon-192.png', tag: 'svs-bad-timer', renotify: true };
+        if ('serviceWorker' in navigator && navigator.serviceWorker) {
+          navigator.serviceWorker.ready
+            .then((reg) => reg.showNotification(title, opts))
+            .catch(() => { try { new Notification(title, opts); } catch (e) {} });
+        } else {
+          new Notification(title, opts);
         }
       } catch (e) {}
     };
@@ -695,6 +701,9 @@ export default function SelfVsSelf() {
     setTaskHistory([{ text: trimmed, categoryId, difficulty, usedAt: Date.now() }, ...filtered].slice(0, 50));
   };
 
+  // タスクが今日のポイントに加えた分（削除・失敗・取り消し時に差し引く用）
+  const reversibleTaskPoints = (t) => (t.completed ? (t.powerEarned || 0) : 0) + (t.partialDone ? (t.partialPower || 0) : 0) + (t.planBonus || 0);
+
   const addTask = (forTomorrow = false) => {
     if (!newTask.trim() || categories.length === 0) return;
     const task = {
@@ -704,6 +713,7 @@ export default function SelfVsSelf() {
       difficulty: newDifficulty,
       completed: false,
       forTomorrow,
+      planBonus: forTomorrow ? 5 : 0,
     };
     setTasks([task, ...tasks]);
     addToHistory(newTask, newCategoryId, newDifficulty);
@@ -900,7 +910,9 @@ export default function SelfVsSelf() {
     const t = tasks.find(x => x.id === id);
     if (!t || t.completed || t.failed) return;
     if (activeTaskTimer && activeTaskTimer.taskId === id) setActiveTaskTimer(null);
-    setTasks(tasks.map(x => x.id === id ? { ...x, failed: true } : x));
+    const rev = reversibleTaskPoints(t);
+    if (rev !== 0) { setTodayPower(todayPower - rev); setTotalPower(totalPower - rev); }
+    setTasks(tasks.map(x => x.id === id ? { ...x, failed: true, partialDone: false, planBonus: 0 } : x));
     setFailedCount(failedCount + 1);
     const key = getTaskKey(t.text, t.categoryId);
     if (taskCombos[key]) {
@@ -913,16 +925,21 @@ export default function SelfVsSelf() {
 
   const deleteTask = (id) => {
     if (activeTaskTimer && activeTaskTimer.taskId === id) setActiveTaskTimer(null);
-    setTasks(tasks.filter(t => t.id !== id));
+    const t = tasks.find(x => x.id === id);
+    if (t) {
+      const rev = reversibleTaskPoints(t);
+      if (rev !== 0) { setTodayPower(todayPower - rev); setTotalPower(totalPower - rev); }
+    }
+    setTasks(tasks.filter(x => x.id !== id));
   };
 
   const uncompleteTask = (id) => {
     const t = tasks.find(x => x.id === id);
     if (!t || !t.completed) return;
     if (!confirm('このタスクを未完了に戻す？獲得ポイントも取り消されます')) return;
-    const earned = t.powerEarned || 0;
-    setTodayPower(todayPower - earned);
-    setTotalPower(totalPower - earned);
+    const rev = reversibleTaskPoints(t);
+    setTodayPower(todayPower - rev);
+    setTotalPower(totalPower - rev);
     setTasks(tasks.map(x => x.id === id ? { id: x.id, text: x.text, categoryId: x.categoryId, difficulty: x.difficulty, completed: false } : x));
   };
 
@@ -930,9 +947,9 @@ export default function SelfVsSelf() {
     const t = tasks.find(x => x.id === id);
     if (!t) return;
     if (!confirm('この完了タスクを削除？獲得ポイントも取り消されます')) return;
-    const earned = t.powerEarned || 0;
-    setTodayPower(todayPower - earned);
-    setTotalPower(totalPower - earned);
+    const rev = reversibleTaskPoints(t);
+    setTodayPower(todayPower - rev);
+    setTotalPower(totalPower - rev);
     setTasks(tasks.filter(x => x.id !== id));
   };
 
@@ -954,30 +971,30 @@ export default function SelfVsSelf() {
   };
 
   const recordWakeUp = () => {
-    if (wakeTime) return;
     const now = new Date();
     const timeStr = now.toLocaleTimeString('ja-JP', { hour: '2-digit', minute: '2-digit' });
     const actualMin = now.getHours() * 60 + now.getMinutes();
     const targetMin = timeStrToMinutes(sleepGoal.wakeup);
     const { power, label } = getScheduleScore(actualMin, targetMin);
+    const prevPower = wakeTime ? (wakeTime.power || 0) : 0;
     setWakeTime({ time: timeStr, power, label, target: sleepGoal.wakeup });
-    setTodayPower(todayPower + power);
-    setTotalPower(totalPower + power);
+    setTodayPower(todayPower - prevPower + power);
+    setTotalPower(totalPower - prevPower + power);
     if (power >= 15) triggerCoach('wakeUpEarly', true);
     else if (power >= 5) triggerCoach('wakeUp', true);
     else triggerCoach('wakeUpLate', true);
   };
 
   const recordSleep = () => {
-    if (sleepTime) return;
     const now = new Date();
     const timeStr = now.toLocaleTimeString('ja-JP', { hour: '2-digit', minute: '2-digit' });
     const actualMin = now.getHours() * 60 + now.getMinutes();
     const targetMin = timeStrToMinutes(sleepGoal.bedtime);
     const { power, label } = getScheduleScore(actualMin, targetMin);
+    const prevPower = sleepTime ? (sleepTime.power || 0) : 0;
     setSleepTime({ time: timeStr, power, label, target: sleepGoal.bedtime });
-    setTodayPower(todayPower + power);
-    setTotalPower(totalPower + power);
+    setTodayPower(todayPower - prevPower + power);
+    setTotalPower(totalPower - prevPower + power);
     if (power >= 15) triggerCoach('sleepEarly', true);
     else if (power >= 5) triggerCoach('sleep', true);
     else triggerCoach('sleepLate', true);
@@ -1729,7 +1746,7 @@ export default function SelfVsSelf() {
             </div>
           )}
           <div className="grid grid-cols-2 gap-2 mb-2">
-            <button onClick={sleepTime ? resetSleep : recordSleep} className={`border-2 rounded-xl p-3 text-left transition active:scale-95 ${sleepTime ? 'bg-zinc-950 border-white' : 'bg-zinc-950 border-zinc-800 hover:border-zinc-600'}`}>
+            <button onClick={recordSleep} className={`border-2 rounded-xl p-3 text-left transition active:scale-95 ${sleepTime ? 'bg-zinc-950 border-white' : 'bg-zinc-950 border-zinc-800 hover:border-zinc-600'}`}>
               <div className="flex items-center gap-1 text-[10px] text-zinc-500 font-bold"><Moon className="w-3.5 h-3.5" /> 就寝　予定 {sleepGoal.bedtime}</div>
               {sleepTime ? (
                 <>
@@ -1740,7 +1757,7 @@ export default function SelfVsSelf() {
                 <div className="text-sm text-zinc-500 mt-1">タップで記録</div>
               )}
             </button>
-            <button onClick={wakeTime ? resetWakeUp : recordWakeUp} className={`border-2 rounded-xl p-3 text-left transition active:scale-95 ${wakeTime ? 'bg-zinc-950 border-white' : 'bg-zinc-950 border-zinc-800 hover:border-zinc-600'}`}>
+            <button onClick={recordWakeUp} className={`border-2 rounded-xl p-3 text-left transition active:scale-95 ${wakeTime ? 'bg-zinc-950 border-white' : 'bg-zinc-950 border-zinc-800 hover:border-zinc-600'}`}>
               <div className="flex items-center gap-1 text-[10px] text-zinc-500 font-bold"><Sunrise className="w-3.5 h-3.5" /> 起床　予定 {sleepGoal.wakeup}</div>
               {wakeTime ? (
                 <>
