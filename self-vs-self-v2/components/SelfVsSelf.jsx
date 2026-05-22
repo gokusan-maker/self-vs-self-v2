@@ -15,8 +15,12 @@ const DEFAULT_CATEGORIES = [
 const DEFAULT_BAD_CATEGORIES = [
   { id: 'sns', label: 'SNS', emoji: '📱' },
   { id: 'game', label: 'ゲーム', emoji: '🎮' },
+  { id: 'video', label: '動画', emoji: '📺' },
   { id: 'slack', label: 'ダラダラ', emoji: '🛋️' },
 ];
+
+// 既存ユーザーのデータにも「動画」カテゴリを反映
+const withVideoCat = (bc) => (bc.some(c => c.id === 'video') ? bc : [...bc.slice(0, 2), { id: 'video', label: '動画', emoji: '📺' }, ...bc.slice(2)]);
 
 const COLOR_OPTIONS = [
   { label: '赤', value: 'from-red-600 to-orange-600' },
@@ -867,7 +871,7 @@ export default function SelfVsSelf() {
                 damageTotal: d.todayDamageTotal || 0,
                 recoveryTotal: d.todayRecoveryTotal || 0,
               });
-              newHistory = newHistory.slice(0, 30);
+              newHistory = newHistory.slice(0, 15);
 
               if (opp > 0) {
                 if (won) newWin++;
@@ -882,7 +886,7 @@ export default function SelfVsSelf() {
             }
 
             setCategories((d.categories || DEFAULT_CATEGORIES).map(c => (c.id === 'body' && c.label === '身体') ? { ...c, label: '健康' } : c));
-            setBadCategories(d.badCategories || DEFAULT_BAD_CATEGORIES);
+            setBadCategories(withVideoCat(d.badCategories || DEFAULT_BAD_CATEGORIES));
             // 未完了タスクは持ち越し。forTomorrow=trueだったタスクは「今日が予定日」になる
             setTasks((d.tasks || [])
               .filter(t => !t.completed && !t.failed)
@@ -922,8 +926,8 @@ export default function SelfVsSelf() {
             setSleepGoal(d.sleepGoal || DEFAULT_SLEEP_GOAL);
           } else {
             setCategories((d.categories || DEFAULT_CATEGORIES).map(c => (c.id === 'body' && c.label === '身体') ? { ...c, label: '健康' } : c));
-            setBadCategories(d.badCategories || DEFAULT_BAD_CATEGORIES);
-            setTasks(d.tasks || []);
+            setBadCategories(withVideoCat(d.badCategories || DEFAULT_BAD_CATEGORIES));
+            setTasks((d.tasks || []).map(t => (t.partialDone && !t.partialDate && !t.completed && !t.failed) ? { ...t, partialDate: todayISO() } : t));
             setTodayPower(d.todayPower || 0);
             setTotalPower(d.totalPower || 0);
             setBestDay(d.bestDay || { date: null, power: 0 });
@@ -1103,10 +1107,14 @@ export default function SelfVsSelf() {
     tasks.forEach(t => {
       if (t.failed) return;
       if (isHabitTask(t)) {
-        if (habitDoneToday(t)) evts.push({ label: '🔁 ' + t.text, points: t.habitPower || 0 });
+        const ti2 = todayISO();
+        let hp = 0;
+        if (t.habitDoneDate === ti2) hp += t.habitPower || 0;
+        if (t.habitPartialDate === ti2) hp += t.habitPartialPower || 0;
+        if (hp !== 0) evts.push({ label: '🔁 ' + t.text, points: hp });
         return;
       }
-      const p = (t.completed ? (t.powerEarned || 0) : 0) + (t.partialDone ? (t.partialPower || 0) : 0) + (t.planBonus || 0);
+      const p = (t.completed ? (t.powerEarned || 0) : 0) + (t.partialDate === todayISO() ? (t.partialPower || 0) : 0) + (t.planBonus || 0);
       if (!t.completed && p === 0) return;
       let label = t.text;
       if (!t.completed) label += t.partialDone ? '（着手）' : '（計画）';
@@ -1156,6 +1164,11 @@ export default function SelfVsSelf() {
     if (!trimmed) return;
     const filtered = taskHistory.filter(h => h.text.toLowerCase() !== trimmed.toLowerCase());
     setTaskHistory([{ text: trimmed, categoryId, difficulty, usedAt: Date.now() }, ...filtered].slice(0, 50));
+  };
+
+  // バトル履歴を1件削除
+  const deleteHistoryEntry = (idx) => {
+    setHistory(history.filter((_, i) => i !== idx));
   };
 
   // タスクが今日のポイントに加えた分（削除・失敗・取り消し時に差し引く用）
@@ -1216,13 +1229,15 @@ export default function SelfVsSelf() {
     if (activeTaskTimer) return;
     setActiveTaskTimer({ taskId: id, startedAt: Date.now() });
     triggerCoach('taskStart');
-    // 着手ボーナス（初回スタート時のみ）
+    // 着手ボーナス（取りかかるたびに加算。未完了で再挑戦しても何度でも入る）
     const t = tasks.find(x => x.id === id);
-    if (t && !t.partialDone && !t.completed) {
+    if (t && !t.completed && !isHabitTask(t)) {
       const startBonus = Math.max(2, Math.round(DIFFICULTIES[t.difficulty].power * 0.2));
+      const ti = todayISO();
+      const newPartial = (t.partialDate === ti ? (t.partialPower || 0) : 0) + startBonus;
       setTodayPower(todayPower + startBonus);
       setTotalPower(totalPower + startBonus);
-      setTasks(tasks.map(x => x.id === id ? { ...x, partialDone: true, partialPower: startBonus, gained: (x.gained || 0) + startBonus } : x));
+      setTasks(tasks.map(x => x.id === id ? { ...x, partialDone: true, partialPower: newPartial, partialDate: ti, gained: (x.gained || 0) + startBonus } : x));
     }
   };
 
@@ -1238,6 +1253,7 @@ export default function SelfVsSelf() {
       completed: false,
       partialDone: true,
       partialPower: startBonus,
+      partialDate: todayISO(),
       gained: startBonus,
     };
     setTasks([task, ...tasks]);
@@ -1255,7 +1271,11 @@ export default function SelfVsSelf() {
     const t = tasks.find(x => x.id === activeTaskTimer.taskId);
     if (!t) { setActiveTaskTimer(null); return; }
     const elapsed = Math.floor((Date.now() - activeTaskTimer.startedAt) / 60000);
-    completeTask(activeTaskTimer.taskId, elapsed);
+    if (isHabitTask(t)) {
+      if (!habitDoneToday(t)) toggleHabit(t.id);
+    } else {
+      completeTask(activeTaskTimer.taskId, elapsed);
+    }
     setActiveTaskTimer(null);
   };
 
@@ -1379,6 +1399,17 @@ export default function SelfVsSelf() {
     }
   };
 
+  // 定期的なタスクに「着手」— 未完了でも手をつけたポイントを加算
+  const habitPartial = (id) => {
+    const t = tasks.find(x => x.id === id);
+    if (!t || !isHabitTask(t)) return;
+    const today = todayISO();
+    if (t.habitDoneDate === today || t.habitPartialDate === today) return;
+    const partialPower = Math.max(2, Math.round(DIFFICULTIES[t.difficulty].power * 0.2));
+    setTasks(tasks.map(x => x.id === id ? { ...x, habitPartialDate: today, habitPartialPower: partialPower } : x));
+    triggerCoach('smallWin');
+  };
+
   // 習慣タスクの完了 / 取り消し（毎日・毎週くり返し）
   const toggleHabit = (id) => {
     const t = tasks.find(x => x.id === id);
@@ -1460,6 +1491,16 @@ export default function SelfVsSelf() {
     setTodayPower(todayPower - rev);
     setTotalPower(totalPower - rev);
     setTasks(tasks.map(x => x.id === id ? { id: x.id, text: x.text, categoryId: x.categoryId, difficulty: x.difficulty, completed: false } : x));
+  };
+
+  // 「未完了」ボタン — 完了を解除してタスクを一覧に残す（予定日・くり返し等は維持）
+  const markTaskIncomplete = (id) => {
+    const ti = todayISO();
+    setTasks(tasks.map(x => {
+      if (x.id !== id || !x.completed) return x;
+      const keep = (x.partialDate === ti ? (x.partialPower || 0) : 0) + (x.planBonus || 0);
+      return { ...x, completed: false, powerEarned: 0, completedDuration: undefined, gained: keep };
+    }));
   };
 
   const deleteCompletedTask = (id) => {
@@ -1607,6 +1648,7 @@ export default function SelfVsSelf() {
       completed: false,
       partialDone: true,
       partialPower: startBonus,
+      partialDate: todayISO(),
       gained: startBonus,
     };
     setTasks([task, ...tasks]);
@@ -1766,9 +1808,10 @@ export default function SelfVsSelf() {
     return da < db ? -1 : da > db ? 1 : 0;
   };
   const habitTasks = tasks.filter(t => isHabitTask(t));
-  const futureTasks = tasks.filter(t => !isHabitTask(t) && !t.completed && !t.failed && t.scheduledDate && t.scheduledDate > _ti).sort(_byDate);
+  // 予定タスク: 完了・未完了の両方を表示（このセクション内に残す）
+  const futureTasks = tasks.filter(t => !isHabitTask(t) && !t.failed && t.scheduledDate && t.scheduledDate > _ti).sort(_byDate);
   const activeTasks = tasks.filter(t => !isHabitTask(t) && !t.completed && !t.failed && !(t.scheduledDate && t.scheduledDate > _ti)).sort(_byDate);
-  const completedTasks = tasks.filter(t => !isHabitTask(t) && t.completed);
+  const completedTasks = tasks.filter(t => !isHabitTask(t) && t.completed && !(t.scheduledDate && t.scheduledDate > _ti));
   const failedTasks = tasks.filter(t => !isHabitTask(t) && t.failed);
 
   // 今日の戦闘時間（タイマー計測したタスクの合計）と敗北時間（ダメタスク合計）
@@ -2039,20 +2082,29 @@ export default function SelfVsSelf() {
                     {dayTasks.map(task => {
                       const cat = getCategory(task.categoryId);
                       const diff = DIFFICULTIES[task.difficulty];
+                      const fDone = task.completed;
                       return (
-                        <div key={task.id} className="bg-gradient-to-br from-blue-900/40 to-cyan-900/30 border-2 border-blue-600/60 rounded-xl p-3 flex items-center gap-2 mb-2">
-                          <button onClick={() => completeTask(task.id)} className="w-9 h-9 rounded-lg border-2 border-cyan-500 hover:border-yellow-400 hover:bg-yellow-500/20 bg-blue-800/50 flex items-center justify-center transition active:scale-90 flex-shrink-0" title="今すぐ実行（前倒しボーナス+15）">
-                            <Check className="w-4 h-4 text-cyan-300" />
-                          </button>
+                        <div key={task.id} className={`rounded-xl p-3 flex items-center gap-2 mb-2 border-2 ${fDone ? 'bg-zinc-900/60 border-zinc-800' : 'bg-gradient-to-br from-blue-900/40 to-cyan-900/30 border-blue-600/60'}`}>
+                          <div className="flex flex-col gap-1 flex-shrink-0">
+                            <button onClick={() => completeTask(task.id)} className={`px-2.5 py-1.5 rounded-md border text-[10px] font-black tracking-wider transition active:scale-90 whitespace-nowrap ${fDone ? 'border-cyan-400 bg-cyan-600 text-white' : 'border-cyan-600 text-cyan-300 hover:bg-cyan-600/20'}`} title="完了（前倒しボーナス+15）">完了</button>
+                            <button onClick={() => markTaskIncomplete(task.id)} className={`px-2.5 py-1.5 rounded-md border text-[10px] font-black tracking-wider transition active:scale-90 whitespace-nowrap ${!fDone ? 'border-zinc-500 bg-zinc-700 text-white' : 'border-zinc-700 text-zinc-400 hover:bg-zinc-700/40'}`} title="未完了で終了（一覧に継続）">未完了で終了</button>
+                          </div>
                           <div className="flex-1 min-w-0">
-                            <div className="font-bold text-cyan-50 break-words tracking-wide">{task.text}</div>
+                            <div className={`font-bold break-words tracking-wide ${fDone ? 'text-zinc-500 line-through' : 'text-cyan-50'}`}>{task.text}</div>
                             <div className="flex flex-wrap gap-1 mt-1">
                               <span className={`text-[9px] px-1.5 py-0.5 rounded bg-gradient-to-r ${cat.color} text-white font-bold`}>{cat.emoji} {cat.label}</span>
-                              <span className="text-[9px] px-1.5 py-0.5 rounded border border-cyan-600 text-cyan-200 font-black tracking-wider">予定日: +{diff.power}</span>
-                              {task.repeat && task.repeat !== 'none' && <span className="text-[9px] px-1.5 py-0.5 rounded bg-purple-700 text-white font-black tracking-wider">{repeatLabel(task.repeat)}</span>}
-                              <span className="text-[9px] px-1.5 py-0.5 rounded bg-yellow-500 text-black font-black tracking-wider">⚡ 今やる +15</span>
+                              {fDone
+                                ? <span className="text-[9px] px-1.5 py-0.5 rounded bg-cyan-700 text-white font-black tracking-wider">✓ 完了 +{task.powerEarned || 0}</span>
+                                : <span className="text-[9px] px-1.5 py-0.5 rounded border border-cyan-600 text-cyan-200 font-black tracking-wider">予定日: +{diff.power}</span>}
+                              {task.partialDate === _ti && <span className="text-[9px] px-1.5 py-0.5 rounded bg-amber-900/50 border border-amber-700 text-amber-300 font-bold">着手 +{task.partialPower}</span>}
+                              {!fDone && <span className="text-[9px] px-1.5 py-0.5 rounded bg-yellow-500 text-black font-black tracking-wider">⚡ 今やる +15</span>}
                             </div>
                           </div>
+                          {!activeTaskTimer && !fDone && (
+                            <button onClick={() => startTask(task.id)} className="w-9 h-9 rounded-lg border border-cyan-700 hover:border-cyan-400 hover:bg-cyan-500/10 flex items-center justify-center transition active:scale-90 flex-shrink-0" title="タイマー開始">
+                              <Play className="w-3.5 h-3.5 text-cyan-300" />
+                            </button>
+                          )}
                           <button onClick={() => deleteTask(task.id)} className="p-1 text-cyan-700 hover:text-red-400 flex-shrink-0" title="削除">
                             <Trash2 className="w-3.5 h-3.5" />
                           </button>
@@ -2093,7 +2145,7 @@ export default function SelfVsSelf() {
                     {isScheduled && <span className="text-[9px] px-1.5 py-0.5 rounded bg-cyan-700 text-white font-black tracking-wider uppercase">📅 予約済み</span>}
                     {task.repeat && task.repeat !== 'none' && <span className="text-[9px] px-1.5 py-0.5 rounded bg-purple-700 text-white font-black tracking-wider">{repeatLabel(task.repeat)}</span>}
                     <span className={`text-[9px] px-1.5 py-0.5 rounded bg-gradient-to-r ${cat.color} text-white font-bold`}>{cat.emoji} {cat.label}</span>
-                    {task.partialDone && <span className="text-[9px] px-1.5 py-0.5 rounded bg-amber-900/50 border border-amber-700 text-amber-300 font-bold">着手 +{task.partialPower}</span>}
+                    {task.partialDate === _ti && <span className="text-[9px] px-1.5 py-0.5 rounded bg-amber-900/50 border border-amber-700 text-amber-300 font-bold">着手 +{task.partialPower}</span>}
                     <span className="text-[9px] px-1.5 py-0.5 rounded border border-zinc-700 text-zinc-400 font-black tracking-wider">+{projectedPower}</span>
                     {bonus.label && <span className="text-[9px] px-1.5 py-0.5 rounded bg-orange-900/40 border border-orange-700 text-orange-300 font-bold">{bonus.label} x{bonus.mult}</span>}
                     {isScheduled && <span className="text-[9px] px-1.5 py-0.5 rounded bg-cyan-900/50 text-cyan-300 font-black tracking-wider">+10 実行</span>}
@@ -2130,11 +2182,13 @@ export default function SelfVsSelf() {
                 const diff = DIFFICULTIES[task.difficulty];
                 const doneToday = habitDoneToday(task);
                 const due = habitDue(task);
+                const partialToday = task.habitPartialDate === todayISO();
                 return (
                   <div key={task.id} className={`rounded-xl p-3 flex items-center gap-2 mb-2 border-2 ${doneToday ? 'bg-zinc-900/60 border-zinc-800' : 'bg-gradient-to-br from-purple-900/40 to-pink-900/20 border-purple-600/60'}`}>
-                    <button onClick={() => toggleHabit(task.id)} className={`w-9 h-9 rounded-lg border-2 flex items-center justify-center transition active:scale-90 flex-shrink-0 ${doneToday ? 'border-purple-500 bg-purple-700/60' : 'border-purple-400 hover:bg-purple-500/20'}`} title={doneToday ? '完了を取り消す' : '完了にする'}>
-                      <Check className={`w-4 h-4 ${doneToday ? 'text-white' : 'text-purple-300'}`} />
-                    </button>
+                    <div className="flex flex-col gap-1 flex-shrink-0">
+                      <button onClick={() => { if (!habitDoneToday(task)) toggleHabit(task.id); }} className={`px-2.5 py-1.5 rounded-md border text-[10px] font-black tracking-wider transition active:scale-90 whitespace-nowrap ${doneToday ? 'border-purple-400 bg-purple-600 text-white' : 'border-purple-500 text-purple-200 hover:bg-purple-500/20'}`} title="完了にする">完了</button>
+                      <button onClick={() => { if (habitDoneToday(task)) toggleHabit(task.id); }} className={`px-2.5 py-1.5 rounded-md border text-[10px] font-black tracking-wider transition active:scale-90 whitespace-nowrap ${!doneToday ? 'border-zinc-500 bg-zinc-700 text-white' : 'border-zinc-700 text-zinc-400 hover:bg-zinc-700/40'}`} title="未完了で終了（一覧に継続）">未完了で終了</button>
+                    </div>
                     <div className="flex-1 min-w-0">
                       <div className={`font-bold break-words tracking-wide ${doneToday ? 'text-zinc-500 line-through' : 'text-purple-50'}`}>{task.text}</div>
                       <div className="flex flex-wrap gap-1 mt-1">
@@ -2145,8 +2199,14 @@ export default function SelfVsSelf() {
                           : due
                             ? <span className="text-[9px] px-1.5 py-0.5 rounded border border-purple-500 text-purple-200 font-black tracking-wider">今日やる +{diff.power}</span>
                             : <span className="text-[9px] px-1.5 py-0.5 rounded bg-zinc-800 text-zinc-500 font-bold tracking-wider">今週は完了済み</span>}
+                        {partialToday && <span className="text-[9px] px-1.5 py-0.5 rounded bg-amber-900/50 border border-amber-700 text-amber-300 font-bold">着手 +{task.habitPartialPower || 0}</span>}
                       </div>
                     </div>
+                    {!activeTaskTimer && !doneToday && (
+                      <button onClick={() => startTask(task.id)} className="w-9 h-9 rounded-lg border border-purple-700 hover:border-purple-400 hover:bg-purple-500/10 flex items-center justify-center transition active:scale-90 flex-shrink-0" title="タイマー開始">
+                        <Play className="w-3.5 h-3.5 text-purple-300" />
+                      </button>
+                    )}
                     <button onClick={() => deleteTask(task.id)} className="p-1 text-zinc-600 hover:text-red-400 flex-shrink-0" title="削除">
                       <Trash2 className="w-3.5 h-3.5" />
                     </button>
@@ -2936,7 +2996,12 @@ export default function SelfVsSelf() {
                           <div className="text-xs text-zinc-500">{new Date(h.date).toLocaleDateString('ja-JP', { month: 'short', day: 'numeric', weekday: 'short' })}</div>
                           <div className="font-black">{h.power} <span className="text-zinc-500 text-sm">vs {h.opponent}</span></div>
                         </div>
-                        <div className={`text-sm font-black tracking-wider ${h.won ? 'text-green-400' : 'text-red-400'}`}>{h.won ? '⚔️ WIN' : '☠️ LOSS'}</div>
+                        <div className="flex items-center gap-2 flex-shrink-0">
+                          <div className={`text-sm font-black tracking-wider ${h.won ? 'text-green-400' : 'text-red-400'}`}>{h.won ? '⚔️ WIN' : '☠️ LOSS'}</div>
+                          <button onClick={() => deleteHistoryEntry(i)} className="p-1 text-zinc-600 hover:text-red-400 transition" title="この履歴を削除">
+                            <X className="w-3.5 h-3.5" />
+                          </button>
+                        </div>
                       </div>
                       {(h.wakeTime || h.sleepTime || h.failedCount > 0 || h.damageTotal > 0 || h.recoveryTotal > 0) && (
                         <div className="flex flex-wrap gap-2 text-xs pt-1 border-t border-zinc-800/50 mt-1">
