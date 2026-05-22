@@ -461,6 +461,7 @@ export default function SelfVsSelf() {
   
   // ボーナスポップアップ
   const [bonusPopup, setBonusPopup] = useState(null); // { items: [{label, points, color, emoji}], totalPoints }
+  const [badResultPopup, setBadResultPopup] = useState(null); // 悪いタスク終了時の結果ポップアップ
   const [showSettings, setShowSettings] = useState(false);
   const [installPrompt, setInstallPrompt] = useState(null);
   const [showHistory, setShowHistory] = useState(false);
@@ -1195,10 +1196,14 @@ export default function SelfVsSelf() {
     const limitMin = activeBadTask.limitMinutes || 0;
     const overMin = limitMin > 0 ? Math.max(0, elapsed - limitMin) : 0;
     const { penalty: overPenalty, label: overLabel } = getOverPenalty(overMin);
-    const totalDamage = damage + overPenalty;
+    // 宣言時間より早く切り上げた場合はダメージを50%軽減（踏みとどまった報酬）
+    const endedEarly = limitMin > 0 && elapsed < limitMin;
+    const earlyReduction = endedEarly ? Math.round(damage * 0.5) : 0;
+    const totalDamage = Math.max(0, damage + overPenalty - earlyReduction);
     
     const now = new Date();
     const timeStr = now.toLocaleTimeString('ja-JP', { hour: '2-digit', minute: '2-digit' });
+    const disp = getBadDisplay(activeBadTask);
     setTodayDamages([{ 
       categoryId: activeBadTask.categoryId, 
       customLabel: activeBadTask.customLabel,
@@ -1209,11 +1214,24 @@ export default function SelfVsSelf() {
       limitMinutes: limitMin,
       overMinutes: overMin,
       overPenalty,
+      earlyReduction,
     }, ...todayDamages]);
     setTodayDamageTotal(todayDamageTotal + totalDamage);
     setTodayPower(todayPower - totalDamage);
     setTotalPower(totalPower - totalDamage);
     setActiveBadTask(null);
+    
+    // 結果ポップアップ（良いタスクのボーナス演出と同じ形式）
+    setBadResultPopup({
+      label: disp.label,
+      emoji: disp.emoji,
+      minutes: elapsed,
+      baseDamage: damage,
+      overPenalty,
+      earlyReduction,
+      totalDamage,
+      endedEarly,
+    });
     
     if (overMin > 0) triggerCoach('badLong', true);
     else if (elapsed <= 5) triggerCoach('badShort');
@@ -1812,7 +1830,7 @@ export default function SelfVsSelf() {
                       {isOver ? (
                         <span className="text-sm text-red-400 font-black">⚠️ オーバー {formatDuration(overMin)}</span>
                       ) : (
-                        <span className="text-sm text-green-400 font-black">残り {formatDuration(remaining)}</span>
+                        <span className="text-sm text-green-400 font-black">残り {formatDuration(remaining)}・早く切り上げると減点50%カット</span>
                       )}
                     </div>
                     <div className="h-2 bg-zinc-900 rounded-full overflow-hidden">
@@ -1929,6 +1947,8 @@ export default function SelfVsSelf() {
                         <span className="text-zinc-500">宣言 {formatDuration(d.limitMinutes)}</span>
                         {wasOver ? (
                           <span className="text-red-400 font-bold">→ +{formatDuration(d.overMinutes)} オーバー（罰則 −{d.overPenalty}）</span>
+                        ) : d.earlyReduction > 0 ? (
+                          <span className="text-emerald-400 font-bold">✓ 早期終了 — 減少率50%カット（−{d.earlyReduction} 軽減）</span>
                         ) : (
                           <span className="text-green-400 font-bold">✓ 時間内</span>
                         )}
@@ -2078,7 +2098,7 @@ export default function SelfVsSelf() {
               )}
               
               <div className="text-sm text-white font-bold mb-1">⏰ 何分以内で終わらせる？</div>
-              <div className="text-xs text-zinc-400 mb-4">宣言した時間をオーバーすると追加ペナルティ</div>
+              <div className="text-xs text-zinc-400 mb-4">宣言した時間をオーバーすると追加ペナルティ／早く切り上げると減点50%カット</div>
               
               <div className="grid grid-cols-3 gap-2 mb-3">
                 {[1, 5, 15, 30, 60, 90].map(min => (
@@ -2163,6 +2183,61 @@ export default function SelfVsSelf() {
                 className="w-full bg-gradient-to-r from-yellow-400 to-orange-500 hover:from-yellow-300 hover:to-orange-400 text-black font-black tracking-[0.2em] uppercase py-3 rounded-xl text-sm transition active:scale-95 shadow-lg"
               >
                 CONTINUE ✊
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* 悪いタスク終了の結果ポップアップ */}
+      {badResultPopup && (
+        <div className="fixed inset-0 z-[60] bg-black/70 backdrop-blur flex items-center justify-center p-4" onClick={() => setBadResultPopup(null)}>
+          <div className="relative max-w-sm w-full" onClick={(e) => e.stopPropagation()}>
+            <div className="absolute inset-0 bg-gradient-to-br from-red-600 to-orange-600 rounded-3xl blur-2xl opacity-40"></div>
+            <div className="relative bg-gradient-to-br from-zinc-900 to-black border-4 border-red-600 rounded-3xl p-6 shadow-2xl">
+              {/* ヘッダー */}
+              <div className="text-center mb-4">
+                <div className="text-5xl mb-2">{badResultPopup.emoji}</div>
+                <div className="text-xs text-red-400 font-black tracking-[0.3em] uppercase mb-1">記録完了</div>
+                <div className="text-3xl font-black text-red-400">−{badResultPopup.totalDamage} PWR</div>
+                <div className="text-xs text-zinc-400 mt-1 truncate px-4">{badResultPopup.label}・{formatDuration(badResultPopup.minutes)}</div>
+              </div>
+
+              {/* マイナス内訳 */}
+              <div className="space-y-2 mb-4">
+                <div className="flex justify-between items-center px-3 py-2 bg-zinc-800/50 rounded-lg">
+                  <span className="text-xs text-zinc-400">基本ダメージ</span>
+                  <span className="text-sm font-black text-red-400">−{badResultPopup.baseDamage}</span>
+                </div>
+                {badResultPopup.overPenalty > 0 && (
+                  <div className="flex justify-between items-center px-3 py-2.5 rounded-lg bg-gradient-to-r from-red-600 to-orange-600 shadow-lg">
+                    <span className="flex items-center gap-2 text-sm font-bold text-white">
+                      <span className="text-xl">⏰</span>
+                      <span>宣言オーバー罰則</span>
+                    </span>
+                    <span className="text-base font-black text-white">−{badResultPopup.overPenalty}</span>
+                  </div>
+                )}
+                {badResultPopup.earlyReduction > 0 && (
+                  <div className="flex justify-between items-center px-3 py-2.5 rounded-lg bg-gradient-to-r from-emerald-500 to-green-600 shadow-lg">
+                    <span className="flex items-center gap-2 text-sm font-bold text-white">
+                      <span className="text-xl">⏳</span>
+                      <span>ポイント減少率低下（早期終了 −50%）</span>
+                    </span>
+                    <span className="text-base font-black text-white">+{badResultPopup.earlyReduction}</span>
+                  </div>
+                )}
+              </div>
+
+              {badResultPopup.endedEarly && (
+                <div className="text-center text-[11px] text-emerald-400 font-bold mb-3">予定より早く切り上げた。踏みとどまったな。</div>
+              )}
+
+              <button
+                onClick={() => setBadResultPopup(null)}
+                className="w-full bg-gradient-to-r from-red-600 to-orange-600 hover:from-red-500 hover:to-orange-500 text-white font-black tracking-[0.2em] uppercase py-3 rounded-xl text-sm transition active:scale-95 shadow-lg"
+              >
+                CONTINUE
               </button>
             </div>
           </div>
