@@ -439,6 +439,7 @@ export default function SelfVsSelf() {
   const [newCategoryId, setNewCategoryId] = useState('life');
   const [newDifficulty, setNewDifficulty] = useState('medium');
   const [newScheduledDate, setNewScheduledDate] = useState(''); // '' = 今日 / YYYY-MM-DD = 予定日
+  const [appNotice, setAppNotice] = useState(null); // LINE風アプリ内通知バナー { id, title, body }
   
   // クイックスタート用
   const [quickText, setQuickText] = useState('');
@@ -617,6 +618,10 @@ export default function SelfVsSelf() {
     const limitSec = (activeBadTask.limitMinutes || 0) * 60;
     let warned = false, over = false;
     const notify = (title, body) => {
+      // LINE風のアプリ内バナー（OS通知の許可状態に関わらず必ず表示）
+      const nid = Date.now() + Math.random();
+      setAppNotice({ id: nid, title, body });
+      setTimeout(() => setAppNotice((cur) => (cur && cur.id === nid ? null : cur)), 6000);
       try {
         if (typeof window === 'undefined' || !('Notification' in window) || Notification.permission !== 'granted') return;
         const opts = { body, icon: '/icon-192.png', badge: '/icon-192.png', tag: 'svs-bad-timer', renotify: true };
@@ -1290,6 +1295,30 @@ export default function SelfVsSelf() {
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-slate-900 via-zinc-900 to-slate-950 text-white pb-24">
+      {/* LINE風アプリ内通知バナー */}
+      {appNotice && (
+        <div className="fixed top-0 left-0 right-0 z-[80] flex justify-center px-3 pt-3 pointer-events-none">
+          <style>{`@keyframes svsSlideDown{from{transform:translateY(-130%);opacity:0}to{transform:translateY(0);opacity:1}}`}</style>
+          <div
+            onClick={() => setAppNotice(null)}
+            style={{ animation: 'svsSlideDown 0.32s ease-out' }}
+            className="pointer-events-auto w-full max-w-md bg-white text-zinc-900 rounded-2xl shadow-2xl ring-1 ring-black/10 overflow-hidden cursor-pointer"
+          >
+            <div className="flex items-start gap-2.5 p-3">
+              <div className="w-9 h-9 rounded-lg bg-gradient-to-br from-red-600 to-orange-600 flex items-center justify-center text-lg flex-shrink-0">⚔️</div>
+              <div className="flex-1 min-w-0">
+                <div className="flex items-center justify-between gap-2">
+                  <span className="text-[11px] font-black text-zinc-500 tracking-wide">SELF vs SELF</span>
+                  <span className="text-[10px] text-zinc-400">今</span>
+                </div>
+                <div className="font-black text-sm text-zinc-900 leading-tight mt-0.5 break-words">{appNotice.title}</div>
+                <div className="text-xs text-zinc-600 leading-snug mt-0.5 break-words">{appNotice.body}</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* ヘッダー */}
       <div className="sticky top-0 z-30 bg-black/80 backdrop-blur border-b border-zinc-800">
         <div className="max-w-2xl mx-auto px-4 py-3 flex items-center justify-between">
@@ -1460,24 +1489,23 @@ export default function SelfVsSelf() {
                 </button>
               ))}
             </div>
-            {/* 予定日の指定 */}
-            <div className="flex flex-wrap gap-1 mb-2">
-              {[['今日', 0], ['明日', 1], ['3日後', 3], ['1週間後', 7], ['1ヶ月後', 30]].map(([label, days]) => {
-                const iso = days === 0 ? '' : dateAfter(days);
-                const active = (newScheduledDate || '') === iso;
-                return (
-                  <button key={label} onClick={() => setNewScheduledDate(iso)} className={`px-2.5 py-1.5 rounded-lg text-[11px] font-bold border-2 transition ${active ? 'bg-gradient-to-r from-blue-600 to-cyan-600 text-white border-transparent shadow-md scale-105' : 'bg-zinc-800 text-zinc-400 border-zinc-700 hover:border-zinc-500'}`}>
-                    {label}
-                  </button>
-                );
-              })}
-              <input
-                type="date"
-                value={newScheduledDate}
-                min={todayISO()}
-                onChange={e => setNewScheduledDate(e.target.value)}
-                className="bg-zinc-800 border-2 border-zinc-700 rounded-lg px-2 py-1 text-[11px] text-white focus:border-cyan-600 outline-none"
-              />
+            {/* 予定日の指定（今日 / 日付を指定 の2択） */}
+            <div className="flex flex-wrap items-center gap-1.5 mb-2">
+              <button onClick={() => setNewScheduledDate('')} className={`px-3.5 py-1.5 rounded-lg text-[11px] font-bold border-2 transition ${!newScheduledDate ? 'bg-gradient-to-r from-blue-600 to-cyan-600 text-white border-transparent shadow-md scale-105' : 'bg-zinc-800 text-zinc-400 border-zinc-700 hover:border-zinc-500'}`}>
+                今日
+              </button>
+              <button onClick={() => setNewScheduledDate((prev) => prev || dateAfter(1))} className={`px-3.5 py-1.5 rounded-lg text-[11px] font-bold border-2 transition ${newScheduledDate ? 'bg-gradient-to-r from-blue-600 to-cyan-600 text-white border-transparent shadow-md scale-105' : 'bg-zinc-800 text-zinc-400 border-zinc-700 hover:border-zinc-500'}`}>
+                日付を指定
+              </button>
+              {newScheduledDate && (
+                <input
+                  type="date"
+                  value={newScheduledDate}
+                  min={dateAfter(1)}
+                  onChange={e => setNewScheduledDate(e.target.value)}
+                  className="bg-zinc-800 border-2 border-zinc-700 rounded-lg px-2 py-1 text-[11px] text-white focus:border-cyan-600 outline-none"
+                />
+              )}
             </div>
             <div className="flex gap-2">
               <button onClick={() => addTask(newScheduledDate)} disabled={!newTask.trim()} className={`flex-1 text-white font-black tracking-wider py-3 rounded-lg disabled:opacity-30 disabled:cursor-not-allowed transition active:scale-95 shadow-md flex items-center justify-center gap-1.5 ${newScheduledDate && newScheduledDate > todayISO() ? 'bg-gradient-to-r from-blue-600 to-cyan-600 hover:from-blue-500 hover:to-cyan-500' : 'bg-gradient-to-r from-red-600 to-orange-600 hover:from-red-500 hover:to-orange-500'}`}>
