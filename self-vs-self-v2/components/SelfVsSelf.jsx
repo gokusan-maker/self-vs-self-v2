@@ -328,17 +328,37 @@ const QUOTES = {
   ],
 };
 
-const randomQuote = (key, exclude = null) => {
+// セリフ履歴：カテゴリごとに使い切るまで同じセリフを出さない
+const quoteHistory = {};
+const randomQuote = (key) => {
   const arr = QUOTES[key] || QUOTES.idle;
-  if (arr.length === 1) return arr[0];
-  let q;
-  do {
-    q = arr[Math.floor(Math.random() * arr.length)];
-  } while (q === exclude);
+  if (arr.length <= 1) return arr[0];
+  let used = quoteHistory[key] || [];
+  let pool = arr.filter(q => !used.includes(q));
+  if (pool.length === 0) { used = []; pool = arr.slice(); }
+  const q = pool[Math.floor(Math.random() * pool.length)];
+  quoteHistory[key] = [...used, q];
   return q;
 };
 
 const getTodayStr = () => new Date().toDateString();
+
+// 日付指定スケジュール用ヘルパー（ローカルタイムの YYYY-MM-DD）
+const dateAfter = (days) => {
+  const d = new Date();
+  d.setDate(d.getDate() + days);
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+};
+const todayISO = () => dateAfter(0);
+const WEEKDAY_JP = ['日', '月', '火', '水', '木', '金', '土'];
+const formatSchedDate = (iso) => {
+  if (!iso) return '今日';
+  if (iso === todayISO()) return '今日';
+  if (iso === dateAfter(1)) return '明日';
+  const [y, m, d] = iso.split('-').map(Number);
+  const w = WEEKDAY_JP[new Date(y, m - 1, d).getDay()];
+  return `${m}/${d}(${w})`;
+};
 
 const formatDuration = (minutes) => {
   if (minutes < 1) return '0分';
@@ -418,6 +438,7 @@ export default function SelfVsSelf() {
   const [newTask, setNewTask] = useState('');
   const [newCategoryId, setNewCategoryId] = useState('life');
   const [newDifficulty, setNewDifficulty] = useState('medium');
+  const [newScheduledDate, setNewScheduledDate] = useState(''); // '' = 今日 / YYYY-MM-DD = 予定日
   
   // クイックスタート用
   const [quickText, setQuickText] = useState('');
@@ -501,7 +522,15 @@ export default function SelfVsSelf() {
             // 未完了タスクは持ち越し。forTomorrow=trueだったタスクは「今日が予定日」になる
             setTasks((d.tasks || [])
               .filter(t => !t.completed && !t.failed)
-              .map(t => t.forTomorrow ? { ...t, forTomorrow: false, scheduledFor: 'today' } : t)
+              .map(t => {
+                const ti = todayISO();
+                if (t.scheduledDate) {
+                  // 予定日が到来したら「今日のタスク（約束達成ボーナス対象）」に昇格
+                  if (t.scheduledDate <= ti) return { ...t, forTomorrow: false, scheduledFor: 'today' };
+                  return t; // まだ未来 → 持ち越し
+                }
+                return t.forTomorrow ? { ...t, forTomorrow: false, scheduledFor: 'today' } : t;
+              })
             );
             setYesterdayPower(d.todayPower || 0);
             setTodayPower(0);
@@ -654,8 +683,7 @@ export default function SelfVsSelf() {
   useEffect(() => {
     const handler = (e) => { e.preventDefault(); setInstallPrompt(e); };
     if (typeof window !== 'undefined') window.addEventListener('beforeinstallprompt', handler);
-    return () => { if (typeof window !== 'undefined') window.removeEventListener('beforeinstallprompt', handler); };
-  }, []);
+    return () => { if (typeof window !== 'undefined') window.removeEventListener('beforeinstallprompt', handler); };  }, []);
 
   useEffect(() => {
     if (categories.length > 0 && !categories.find(c => c.id === newCategoryId)) {
@@ -703,7 +731,7 @@ export default function SelfVsSelf() {
   const damageRemaining = Math.max(0, todayDamageTotal - damageHealed);
 
   const triggerCoach = (key, intense = false) => {
-    setCoachQuote(randomQuote(key, coachQuote));
+    setCoachQuote(randomQuote(key));
     setCoachIntense(intense);
     setTimeout(() => setCoachIntense(false), 4000);
   };
@@ -719,23 +747,27 @@ export default function SelfVsSelf() {
   // タスクが今日のポイントに加えた分（削除・失敗・取り消し時に差し引く用）
   const reversibleTaskPoints = (t) => (t.completed ? (t.powerEarned || 0) : 0) + (t.partialDone ? (t.partialPower || 0) : 0) + (t.planBonus || 0);
 
-  const addTask = (forTomorrow = false) => {
+  const addTask = (scheduledDate = '') => {
     if (!newTask.trim() || categories.length === 0) return;
+    const sd = scheduledDate || '';
+    const isFuture = sd && sd > todayISO();
     const task = {
       id: Date.now().toString(),
       text: newTask.trim(),
       categoryId: newCategoryId,
       difficulty: newDifficulty,
       completed: false,
-      forTomorrow,
-      planBonus: forTomorrow ? 5 : 0,
+      scheduledDate: sd || null,            // 予定日（YYYY-MM-DD）。null/今日 は当日タスク
+      forTomorrow: isFuture,                // 互換用
+      planBonus: isFuture ? 5 : 0,
     };
     setTasks([task, ...tasks]);
     addToHistory(newTask, newCategoryId, newDifficulty);
     setNewTask('');
-    
-    if (forTomorrow) {
-      // 計画ボーナス +5 PWR
+    setNewScheduledDate('');
+
+    if (isFuture) {
+      // 計画ボーナス +5 PWR（先に予定を立てた報酬）
       setTodayPower(todayPower + 5);
       setTotalPower(totalPower + 5);
       triggerCoach('scheduled', true);
@@ -829,11 +861,12 @@ export default function SelfVsSelf() {
     // リカバリーボーナス
     const recovery = 0; // 良いタスクと悪いタスクの差分で算出（回復ボーナス廃止）
     
-    // 予約タスク実行ボーナス（昨日予約 → 今日実行）
-    const scheduledBonus = t.scheduledFor === 'today' ? 10 : 0;
+    // 予約タスク実行ボーナス（予定日ちょうどに実行）
+    const ti = todayISO();
+    const scheduledBonus = ((t.scheduledDate && t.scheduledDate === ti) || t.scheduledFor === 'today') ? 10 : 0;
     
-    // 前倒しボーナス（明日予約のタスクを今日のうちに実行）
-    const earlyBonus = t.forTomorrow ? 15 : 0;
+    // 前倒しボーナス（予定日より前に実行）
+    const earlyBonus = (t.scheduledDate && t.scheduledDate > ti) ? 15 : 0;
     
     const finalPower = taskPower + recovery + scheduledBonus + earlyBonus;
 
@@ -973,7 +1006,7 @@ export default function SelfVsSelf() {
       try { installPrompt.prompt(); await installPrompt.userChoice; } catch (e) {}
       setInstallPrompt(null);
     } else {
-      alert('このブラウザでは、メニューから「ホーム画面に追加」または「アプリをインストール」を選んでください。\n\niPhone: Safariの共有ボタン →「ホーム画面に追加」\nAndroid: Chromeのメニュー(\u22ee) →「アプリをインストール」');
+      alert('このブラウザでは、メニューから「ホーム画面に追加」または「アプリをインストール」を選んでください。\n\niPhone: Safariの共有ボタン →「ホーム画面に追加」\nAndroid: Chromeのメニュー(⋮) →「アプリをインストール」');
     }
   };
 
@@ -1236,7 +1269,9 @@ export default function SelfVsSelf() {
   };
   const deleteBadCategory = (id) => setBadCategories(badCategories.filter(c => c.id !== id));
 
-  const activeTasks = tasks.filter(t => !t.completed && !t.failed);
+  const _ti = todayISO();
+  const futureTasks = tasks.filter(t => !t.completed && !t.failed && t.scheduledDate && t.scheduledDate > _ti);
+  const activeTasks = tasks.filter(t => !t.completed && !t.failed && !(t.scheduledDate && t.scheduledDate > _ti));
   const completedTasks = tasks.filter(t => t.completed);
   const failedTasks = tasks.filter(t => t.failed);
 
@@ -1344,8 +1379,7 @@ export default function SelfVsSelf() {
                       {minusTotal > 0 && <div className="bg-red-600 flex items-center justify-center text-white text-xs font-black" style={{ width: `${100 - plusPct}%` }}>−{minusTotal}</div>}
                     </div>
                     <div className="text-xs mt-1.5">
-                      {plusTotal >= minusTotal
-                        ? <span className="text-green-400 font-bold">プラス優勢 — 差 +{plusTotal - minusTotal}</span>
+                      {plusTotal >= minusTotal                        ? <span className="text-green-400 font-bold">プラス優勢 — 差 +{plusTotal - minusTotal}</span>
                         : <span className="text-red-400 font-bold">マイナス優勢 — 差 −{minusTotal - plusTotal}</span>}
                     </div>
                     <div className="mt-2 border-t border-zinc-800 pt-2 space-y-0.5">
@@ -1426,13 +1460,32 @@ export default function SelfVsSelf() {
                 </button>
               ))}
             </div>
+            {/* 予定日の指定 */}
+            <div className="flex flex-wrap gap-1 mb-2">
+              {[['今日', 0], ['明日', 1], ['3日後', 3], ['1週間後', 7], ['1ヶ月後', 30]].map(([label, days]) => {
+                const iso = days === 0 ? '' : dateAfter(days);
+                const active = (newScheduledDate || '') === iso;
+                return (
+                  <button key={label} onClick={() => setNewScheduledDate(iso)} className={`px-2.5 py-1.5 rounded-lg text-[11px] font-bold border-2 transition ${active ? 'bg-gradient-to-r from-blue-600 to-cyan-600 text-white border-transparent shadow-md scale-105' : 'bg-zinc-800 text-zinc-400 border-zinc-700 hover:border-zinc-500'}`}>
+                    {label}
+                  </button>
+                );
+              })}
+              <input
+                type="date"
+                value={newScheduledDate}
+                min={todayISO()}
+                onChange={e => setNewScheduledDate(e.target.value)}
+                className="bg-zinc-800 border-2 border-zinc-700 rounded-lg px-2 py-1 text-[11px] text-white focus:border-cyan-600 outline-none"
+              />
+            </div>
             <div className="flex gap-2">
-              <button onClick={() => addTask(false)} disabled={!newTask.trim()} className="flex-1 bg-gradient-to-r from-red-600 to-orange-600 hover:from-red-500 hover:to-orange-500 text-white font-black tracking-wider py-3 rounded-lg disabled:opacity-30 disabled:cursor-not-allowed transition active:scale-95 shadow-md">
-                ➕ 今日のタスク
-              </button>
-              <button onClick={() => addTask(true)} disabled={!newTask.trim()} className="flex-1 bg-gradient-to-r from-blue-600 to-cyan-600 hover:from-blue-500 hover:to-cyan-500 text-white font-black tracking-wider py-3 rounded-lg disabled:opacity-30 disabled:cursor-not-allowed transition active:scale-95 shadow-md flex items-center justify-center gap-1">
-                <CalendarPlus className="w-4 h-4" />
-                明日 +5
+              <button onClick={() => addTask(newScheduledDate)} disabled={!newTask.trim()} className={`flex-1 text-white font-black tracking-wider py-3 rounded-lg disabled:opacity-30 disabled:cursor-not-allowed transition active:scale-95 shadow-md flex items-center justify-center gap-1.5 ${newScheduledDate && newScheduledDate > todayISO() ? 'bg-gradient-to-r from-blue-600 to-cyan-600 hover:from-blue-500 hover:to-cyan-500' : 'bg-gradient-to-r from-red-600 to-orange-600 hover:from-red-500 hover:to-orange-500'}`}>
+                {newScheduledDate && newScheduledDate > todayISO() ? (
+                  <><CalendarPlus className="w-4 h-4" />{formatSchedDate(newScheduledDate)}に予定を追加 （計画+5）</>
+                ) : (
+                  <>➕ 今日のタスクを追加</>
+                )}
               </button>
             </div>
           </div>
@@ -1446,40 +1499,47 @@ export default function SelfVsSelf() {
               <div className="text-zinc-700 text-[9px] tracking-wider uppercase mt-1">Define Your Mission</div>
             </div>
           )}
-          {/* 明日のタスク（予約） */}
-          {activeTasks.filter(t => t.forTomorrow).length > 0 && (
+          {/* 予定タスク（日付指定） */}
+          {futureTasks.length > 0 && (
             <div className="mb-2">
               <div className="text-xs text-cyan-300 tracking-[0.2em] mb-2 font-black uppercase flex items-center gap-1.5 px-1">
                 <CalendarPlus className="w-3.5 h-3.5" />
-                明日やる予定 ({activeTasks.filter(t => t.forTomorrow).length}) 
+                予定タスク ({futureTasks.length})
                 <span className="text-yellow-400 text-[10px] ml-auto">⚡ 今やると+15ボーナス</span>
               </div>
-              {activeTasks.filter(t => t.forTomorrow).map(task => {
-                const cat = getCategory(task.categoryId);
-                const diff = DIFFICULTIES[task.difficulty];
-                return (
-                  <div key={task.id} className="bg-gradient-to-br from-blue-900/40 to-cyan-900/30 border-2 border-blue-600/60 rounded-xl p-3 flex items-center gap-2 mb-2">
-                    <button onClick={() => completeTask(task.id)} className="w-9 h-9 rounded-lg border-2 border-cyan-500 hover:border-yellow-400 hover:bg-yellow-500/20 bg-blue-800/50 flex items-center justify-center transition active:scale-90 flex-shrink-0" title="今すぐ実行（前倒しボーナス+15）">
-                      <Check className="w-4 h-4 text-cyan-300" />
-                    </button>
-                    <div className="flex-1 min-w-0">
-                      <div className="font-bold text-cyan-50 break-words tracking-wide">{task.text}</div>
-                      <div className="flex flex-wrap gap-1 mt-1">
-                        <span className={`text-[9px] px-1.5 py-0.5 rounded bg-gradient-to-r ${cat.color} text-white font-bold`}>{cat.emoji} {cat.label}</span>
-                        <span className="text-[9px] px-1.5 py-0.5 rounded border border-cyan-600 text-cyan-200 font-black tracking-wider">明日: +{diff.power}</span>
-                        <span className="text-[9px] px-1.5 py-0.5 rounded bg-yellow-500 text-black font-black tracking-wider">⚡ 今やる +15</span>
-                      </div>
-                    </div>
-                    <button onClick={() => deleteTask(task.id)} className="p-1 text-cyan-700 hover:text-red-400 flex-shrink-0" title="削除">
-                      <Trash2 className="w-3.5 h-3.5" />
-                    </button>
+              {Object.entries(futureTasks.reduce((g, t) => { (g[t.scheduledDate] = g[t.scheduledDate] || []).push(t); return g; }, {}))
+                .sort((a, b) => (a[0] < b[0] ? -1 : 1))
+                .map(([dateStr, dayTasks]) => (
+                  <div key={dateStr} className="mb-2">
+                    <div className="text-[10px] text-cyan-400 font-black tracking-wider mb-1 px-1 uppercase">📅 {formatSchedDate(dateStr)} の予定</div>
+                    {dayTasks.map(task => {
+                      const cat = getCategory(task.categoryId);
+                      const diff = DIFFICULTIES[task.difficulty];
+                      return (
+                        <div key={task.id} className="bg-gradient-to-br from-blue-900/40 to-cyan-900/30 border-2 border-blue-600/60 rounded-xl p-3 flex items-center gap-2 mb-2">
+                          <button onClick={() => completeTask(task.id)} className="w-9 h-9 rounded-lg border-2 border-cyan-500 hover:border-yellow-400 hover:bg-yellow-500/20 bg-blue-800/50 flex items-center justify-center transition active:scale-90 flex-shrink-0" title="今すぐ実行（前倒しボーナス+15）">
+                            <Check className="w-4 h-4 text-cyan-300" />
+                          </button>
+                          <div className="flex-1 min-w-0">
+                            <div className="font-bold text-cyan-50 break-words tracking-wide">{task.text}</div>
+                            <div className="flex flex-wrap gap-1 mt-1">
+                              <span className={`text-[9px] px-1.5 py-0.5 rounded bg-gradient-to-r ${cat.color} text-white font-bold`}>{cat.emoji} {cat.label}</span>
+                              <span className="text-[9px] px-1.5 py-0.5 rounded border border-cyan-600 text-cyan-200 font-black tracking-wider">予定日: +{diff.power}</span>
+                              <span className="text-[9px] px-1.5 py-0.5 rounded bg-yellow-500 text-black font-black tracking-wider">⚡ 今やる +15</span>
+                            </div>
+                          </div>
+                          <button onClick={() => deleteTask(task.id)} className="p-1 text-cyan-700 hover:text-red-400 flex-shrink-0" title="削除">
+                            <Trash2 className="w-3.5 h-3.5" />
+                          </button>
+                        </div>
+                      );
+                    })}
                   </div>
-                );
-              })}
+                ))}
             </div>
           )}
 
-          {activeTasks.filter(t => !t.forTomorrow).map(task => {
+          {activeTasks.map(task => {
             const cat = getCategory(task.categoryId);
             const diff = DIFFICULTIES[task.difficulty];
             const key = getTaskKey(task.text, task.categoryId);
@@ -1487,9 +1547,10 @@ export default function SelfVsSelf() {
             const yesterday = new Date(Date.now() - 86400000).toDateString();
             const nextCombo = taskCombos[key]?.lastDate === yesterday ? currentCombo + 1 : (taskCombos[key]?.lastDate === getTodayStr() ? currentCombo : 1);
             const bonus = getComboBonus(nextCombo);
-            const projectedPower = Math.round(diff.power * bonus.mult) + (task.scheduledFor === 'today' ? 10 : 0);
+            const isSchedToday = task.scheduledFor === 'today' || task.scheduledDate === _ti;
+            const projectedPower = Math.round(diff.power * bonus.mult) + (isSchedToday ? 10 : 0);
             const isTiming = activeTaskTimer?.taskId === task.id;
-            const isScheduled = task.scheduledFor === 'today';
+            const isScheduled = isSchedToday;
             return (
               <div key={task.id} className={`bg-zinc-950 border ${isTiming ? 'border-white' : isScheduled ? 'border-cyan-700' : 'border-zinc-800'} rounded-xl p-3 flex items-center gap-2`}>
                 <button onClick={() => completeTask(task.id)} disabled={isTiming} className="w-9 h-9 rounded-lg border-2 border-zinc-700 hover:border-white hover:bg-white/5 flex items-center justify-center transition active:scale-90 flex-shrink-0 disabled:opacity-30" title="完了">
@@ -1798,8 +1859,7 @@ export default function SelfVsSelf() {
                 <div className="text-sm text-zinc-500 mt-1">タップで記録</div>
               )}
             </button>
-            <button onClick={recordWakeUp} className={`border-2 rounded-xl p-3 text-left transition active:scale-95 ${wakeTime ? 'bg-zinc-950 border-white' : 'bg-zinc-950 border-zinc-800 hover:border-zinc-600'}`}>
-              <div className="flex items-center gap-1 text-[10px] text-zinc-500 font-bold"><Sunrise className="w-3.5 h-3.5" /> 起床　予定 {sleepGoal.wakeup}</div>
+            <button onClick={recordWakeUp} className={`border-2 rounded-xl p-3 text-left transition active:scale-95 ${wakeTime ? 'bg-zinc-950 border-white' : 'bg-zinc-950 border-zinc-800 hover:border-zinc-600'}`}>              <div className="flex items-center gap-1 text-[10px] text-zinc-500 font-bold"><Sunrise className="w-3.5 h-3.5" /> 起床　予定 {sleepGoal.wakeup}</div>
               {wakeTime ? (
                 <>
                   <div className="text-xl font-black font-mono text-white mt-1">{wakeTime.time}</div>
