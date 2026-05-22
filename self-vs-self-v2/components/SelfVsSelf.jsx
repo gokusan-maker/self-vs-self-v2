@@ -440,6 +440,7 @@ export default function SelfVsSelf() {
   // ボーナスポップアップ
   const [bonusPopup, setBonusPopup] = useState(null); // { items: [{label, points, color, emoji}], totalPoints }
   const [showSettings, setShowSettings] = useState(false);
+  const [installPrompt, setInstallPrompt] = useState(null);
   const [showHistory, setShowHistory] = useState(false);
   const [showBadSettings, setShowBadSettings] = useState(false);
   const [editingCat, setEditingCat] = useState(null);
@@ -641,6 +642,13 @@ export default function SelfVsSelf() {
       }, 100);
     }
   }, [activeTaskTimer]);
+
+  // PWAインストール用イベントを捕捉
+  useEffect(() => {
+    const handler = (e) => { e.preventDefault(); setInstallPrompt(e); };
+    if (typeof window !== 'undefined') window.addEventListener('beforeinstallprompt', handler);
+    return () => { if (typeof window !== 'undefined') window.removeEventListener('beforeinstallprompt', handler); };
+  }, []);
 
   useEffect(() => {
     if (categories.length > 0 && !categories.find(c => c.id === newCategoryId)) {
@@ -951,6 +959,32 @@ export default function SelfVsSelf() {
     setTodayPower(todayPower - rev);
     setTotalPower(totalPower - rev);
     setTasks(tasks.filter(x => x.id !== id));
+  };
+
+  const doInstall = async () => {
+    if (installPrompt) {
+      try { installPrompt.prompt(); await installPrompt.userChoice; } catch (e) {}
+      setInstallPrompt(null);
+    } else {
+      alert('このブラウザでは、メニューから「ホーム画面に追加」または「アプリをインストール」を選んでください。\n\niPhone: Safariの共有ボタン →「ホーム画面に追加」\nAndroid: Chromeのメニュー(\u22ee) →「アプリをインストール」');
+    }
+  };
+
+  const resetToday = () => {
+    if (!confirm('今日の記録をリセットしますか？\n今日のタスク・記録・今日の自分のポイントがすべて消えます（累計・過去の履歴は残ります）')) return;
+    setTotalPower(Math.max(0, totalPower - todayPower));
+    setTodayPower(0);
+    setTasks([]);
+    setWakeTime(null);
+    setSleepTime(null);
+    setFailedCount(0);
+    setTodayDamages([]);
+    setTodayDamageTotal(0);
+    setTodayRecoveryTotal(0);
+    setDamageHealed(0);
+    setActiveTaskTimer(null);
+    setActiveBadTask(null);
+    setShowSettings(false);
   };
 
   const saveEditDone = () => {
@@ -2089,6 +2123,10 @@ export default function SelfVsSelf() {
                   ))}
                   <button onClick={() => openCategoryEditor()} className="w-full py-3 rounded-lg border-2 border-dashed border-zinc-700 text-zinc-400 hover:text-white hover:border-zinc-500 font-bold">+ 新しいカテゴリ</button>
                   <button onClick={() => { setShowSettings(false); setShowBadSettings(true); }} className="w-full mt-4 py-3 rounded-lg border-2 border-dashed border-red-900 text-red-500 hover:text-red-300 hover:border-red-700 font-bold">⚠ ダメな行為カテゴリを編集</button>
+                  <div className="mt-6 pt-4 border-t border-zinc-800 space-y-2">
+                    <button onClick={doInstall} className="w-full py-3 rounded-lg bg-gradient-to-r from-blue-600 to-cyan-600 text-white font-black">📲 アプリをインストール</button>
+                    <button onClick={resetToday} className="w-full py-3 rounded-lg border border-zinc-700 text-zinc-400 hover:text-red-300 hover:border-red-700 font-bold">今日の記録をリセット</button>
+                  </div>
                 </div>
               )}
             </div>
