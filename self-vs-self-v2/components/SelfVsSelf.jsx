@@ -406,6 +406,7 @@ export default function SelfVsSelf() {
   const [todayRecoveryTotal, setTodayRecoveryTotal] = useState(0);
   const [damageHealed, setDamageHealed] = useState(0); // 回復済みダメージ
   const [currentBadTimer, setCurrentBadTimer] = useState(0);
+  const [currentBadSeconds, setCurrentBadSeconds] = useState(0);
   const [activeTaskTimer, setActiveTaskTimer] = useState(null); // {taskId, startedAt}
   const [currentTaskTimer, setCurrentTaskTimer] = useState(0);
   const [currentTaskSeconds, setCurrentTaskSeconds] = useState(0); // 秒単位（リアルタイム表示用）
@@ -420,6 +421,9 @@ export default function SelfVsSelf() {
   // クイックスタート用
   const [quickText, setQuickText] = useState('');
   const [badQuickText, setBadQuickText] = useState('');
+  const [editingDoneId, setEditingDoneId] = useState(null);
+  const [choosingTaskId, setChoosingTaskId] = useState(null);
+  const [editDoneText, setEditDoneText] = useState('');
   const [quickCategoryId, setQuickCategoryId] = useState('life');
   const [quickDifficulty, setQuickDifficulty] = useState('medium');
   const [isLoading, setIsLoading] = useState(true);
@@ -576,10 +580,14 @@ export default function SelfVsSelf() {
     })();
   }, [categories, badCategories, tasks, todayPower, totalPower, bestDay, yesterdayPower, currentDate, streak, winCount, lossCount, history, opponentType, wakeTime, sleepTime, failedCount, taskCombos, taskMaxDurations, taskHistory, activeBadTask, badHistory, todayDamages, todayDamageTotal, todayRecoveryTotal, damageHealed, activeTaskTimer, sleepGoal, isLoading]);
 
-  // ダメタスクのタイマー
+  // ダメタスクのタイマー（秒単位でリアルタイム更新）
   useEffect(() => {
-    if (!activeBadTask) { setCurrentBadTimer(0); return; }
-    const update = () => setCurrentBadTimer(Math.floor((Date.now() - activeBadTask.startedAt) / 60000));
+    if (!activeBadTask) { setCurrentBadTimer(0); setCurrentBadSeconds(0); return; }
+    const update = () => {
+      const sec = Math.floor((Date.now() - activeBadTask.startedAt) / 1000);
+      setCurrentBadSeconds(sec);
+      setCurrentBadTimer(Math.floor(sec / 60));
+    };
     update();
     const interval = setInterval(update, 1000);
     return () => clearInterval(interval);
@@ -751,7 +759,7 @@ export default function SelfVsSelf() {
     const taskPower = Math.round(basePower * bonus.mult) + durationBonus.bonus + longerBonus.bonus;
 
     // リカバリーボーナス
-    const recovery = getRecoveryBonus(damageRemaining, taskPower);
+    const recovery = 0; // 良いタスクと悪いタスクの差分で算出（回復ボーナス廃止）
     
     // 予約タスク実行ボーナス（昨日予約 → 今日実行）
     const scheduledBonus = t.scheduledFor === 'today' ? 10 : 0;
@@ -832,6 +840,18 @@ export default function SelfVsSelf() {
     }
   };
 
+  // 途中まで（未完了）でも記録 — 手を付けただけでプラス
+  const partialComplete = (id) => {
+    const t = tasks.find(x => x.id === id);
+    if (!t || t.completed) return;
+    if (activeTaskTimer && activeTaskTimer.taskId === id) setActiveTaskTimer(null);
+    const partialPower = Math.max(2, Math.round(DIFFICULTIES[t.difficulty].power * 0.2));
+    setTodayPower(todayPower + partialPower);
+    setTotalPower(totalPower + partialPower);
+    setTasks(tasks.map(x => x.id === id ? { ...x, completed: true, partial: true, powerEarned: partialPower } : x));
+    triggerCoach('smallWin');
+  };
+
   const failTask = (id) => {
     const t = tasks.find(x => x.id === id);
     if (!t || t.completed || t.failed) return;
@@ -850,6 +870,43 @@ export default function SelfVsSelf() {
   const deleteTask = (id) => {
     if (activeTaskTimer && activeTaskTimer.taskId === id) setActiveTaskTimer(null);
     setTasks(tasks.filter(t => t.id !== id));
+  };
+
+  const uncompleteTask = (id) => {
+    const t = tasks.find(x => x.id === id);
+    if (!t || !t.completed) return;
+    if (!confirm('このタスクを未完了に戻す？獲得ポイントも取り消されます')) return;
+    const earned = t.powerEarned || 0;
+    setTodayPower(todayPower - earned);
+    setTotalPower(totalPower - earned);
+    setTasks(tasks.map(x => x.id === id ? { id: x.id, text: x.text, categoryId: x.categoryId, difficulty: x.difficulty, completed: false } : x));
+  };
+
+  const deleteCompletedTask = (id) => {
+    const t = tasks.find(x => x.id === id);
+    if (!t) return;
+    if (!confirm('この完了タスクを削除？獲得ポイントも取り消されます')) return;
+    const earned = t.powerEarned || 0;
+    setTodayPower(todayPower - earned);
+    setTotalPower(totalPower - earned);
+    setTasks(tasks.filter(x => x.id !== id));
+  };
+
+  const saveEditDone = () => {
+    if (!editDoneText.trim()) { setEditingDoneId(null); return; }
+    setTasks(tasks.map(x => x.id === editingDoneId ? { ...x, text: editDoneText.trim() } : x));
+    setEditingDoneId(null);
+  };
+
+  const deleteDamage = (index) => {
+    const d = todayDamages[index];
+    if (!d) return;
+    if (!confirm('この記録を削除？マイナス分も取り消されます')) return;
+    const dmg = d.damage || 0;
+    setTodayPower(todayPower + dmg);
+    setTotalPower(totalPower + dmg);
+    setTodayDamageTotal(Math.max(0, todayDamageTotal - dmg));
+    setTodayDamages(todayDamages.filter((_, i) => i !== index));
   };
 
   const recordWakeUp = () => {
@@ -1212,9 +1269,12 @@ export default function SelfVsSelf() {
               </div>
               <div className="flex gap-2">
                 <button onClick={stopTaskTimer} className="flex-1 bg-green-600 hover:bg-green-500 text-white font-black py-3 rounded-lg tracking-wider transition active:scale-95">
-                  <Check className="w-4 h-4 inline mr-1" /> 完了して記録
+                  <Check className="w-4 h-4 inline mr-1" /> 完了
                 </button>
-                <button onClick={cancelTaskTimer} className="px-4 bg-zinc-800 hover:bg-zinc-700 text-zinc-400 rounded-lg transition">
+                <button onClick={() => partialComplete(activeTaskTimer.taskId)} className="flex-1 bg-zinc-700 hover:bg-zinc-600 text-zinc-100 font-bold py-3 rounded-lg tracking-wider transition active:scale-95">
+                  未完了で終了
+                </button>
+                <button onClick={cancelTaskTimer} className="px-3 bg-zinc-800 hover:bg-zinc-700 text-zinc-400 rounded-lg transition">
                   <X className="w-4 h-4" />
                 </button>
               </div>
@@ -1350,7 +1410,8 @@ export default function SelfVsSelf() {
                 <span className="font-mono">{formatDuration(currentBadTimer)}</span>
               </div>
               <div className="p-4">
-                <div className="text-2xl font-black text-white mb-2">{getBadDisplay(activeBadTask).emoji} {getBadDisplay(activeBadTask).label}</div>
+                <div className="text-2xl font-black text-white mb-1">{getBadDisplay(activeBadTask).emoji} {getBadDisplay(activeBadTask).label}</div>
+                <div className="text-3xl font-black font-mono text-orange-300 tracking-widest tabular-nums mb-3">{formatHMS(currentBadSeconds)}</div>
                 
                 {limit > 0 && (
                   <div className={`mb-3 p-3 rounded-xl ${isOver ? 'bg-red-900/40 border-2 border-red-500' : 'bg-zinc-800/60 border border-zinc-700'}`}>
@@ -1467,7 +1528,10 @@ export default function SelfVsSelf() {
                     <div className="flex items-center justify-between text-sm">
                       <span className="text-white font-bold">{disp.emoji} {disp.label}</span>
                       <span className="text-zinc-400 text-[10px]">{d.time} · {formatDuration(d.minutes)}</span>
-                      <span className="text-red-400 font-black">−{d.damage}</span>
+                      <span className="flex items-center gap-2">
+                        <span className="text-red-400 font-black">−{d.damage}</span>
+                        <button onClick={() => deleteDamage(i)} className="text-zinc-600 hover:text-red-400" title="削除"><Trash2 className="w-3.5 h-3.5" /></button>
+                      </span>
                     </div>
                     {d.limitMinutes > 0 && (
                       <div className="text-[10px] mt-1 flex items-center gap-2">
@@ -1603,7 +1667,7 @@ export default function SelfVsSelf() {
             const isScheduled = task.scheduledFor === 'today';
             return (
               <div key={task.id} className={`bg-zinc-950 border ${isTiming ? 'border-white' : isScheduled ? 'border-cyan-700' : 'border-zinc-800'} rounded-xl p-3 flex items-center gap-2`}>
-                <button onClick={() => completeTask(task.id)} disabled={isTiming} className="w-9 h-9 rounded-lg border-2 border-zinc-700 hover:border-white hover:bg-white/5 flex items-center justify-center transition active:scale-90 flex-shrink-0 disabled:opacity-30">
+                <button onClick={() => completeTask(task.id)} disabled={isTiming} className="w-9 h-9 rounded-lg border-2 border-zinc-700 hover:border-white hover:bg-white/5 flex items-center justify-center transition active:scale-90 flex-shrink-0 disabled:opacity-30" title="完了">
                   <Check className="w-4 h-4 text-zinc-600" />
                 </button>
                 <div className="flex-1 min-w-0">
@@ -1665,13 +1729,18 @@ export default function SelfVsSelf() {
               <div className="text-[10px] text-zinc-500 tracking-[0.3em] mb-2 font-black uppercase">⬢ Completed ({completedTasks.length})</div>
               {completedTasks.map(task => {
                 const cat = getCategory(task.categoryId);
+                const editing = editingDoneId === task.id;
                 return (
-                  <div key={task.id} className="bg-zinc-950 border border-zinc-800/60 p-3 flex items-center gap-3 mb-2 opacity-60">
+                  <div key={task.id} className="bg-zinc-950 border border-zinc-800/60 p-3 flex items-center gap-2 mb-2">
                     <div className="w-9 h-9 border-2 border-white flex items-center justify-center flex-shrink-0">
                       <Check className="w-4 h-4 text-white" />
                     </div>
                     <div className="flex-1 min-w-0">
-                      <div className="font-bold line-through text-zinc-500 break-words tracking-wide">{task.text}</div>
+                      {editing ? (
+                        <input type="text" value={editDoneText} onChange={(e) => setEditDoneText(e.target.value)} onKeyDown={(e) => e.key === 'Enter' && saveEditDone()} autoFocus className="w-full bg-black border border-zinc-600 rounded px-2 py-1 text-white text-sm focus:border-white focus:outline-none" />
+                      ) : (
+                        <div className="font-bold line-through text-zinc-500 break-words tracking-wide">{task.text}</div>
+                      )}
                       <div className="flex flex-wrap gap-1 mt-1">
                         <span className="text-[9px] px-1.5 py-0.5 bg-zinc-800 text-zinc-400 tracking-wider uppercase">{cat.label}</span>
                         <span className="text-[9px] px-1.5 py-0.5 bg-white text-black font-black tracking-wider font-mono">+{task.powerEarned || 0}</span>
@@ -1681,20 +1750,23 @@ export default function SelfVsSelf() {
                         {task.comboAtCompletion >= 2 && (
                           <span className="text-[9px] px-1.5 py-0.5 bg-zinc-800 text-white font-black tracking-wider uppercase">×{task.comboAtCompletion} STREAK</span>
                         )}
-                        {task.recoveryBonus > 0 && (
-                          <span className="text-[9px] px-1.5 py-0.5 border border-zinc-600 text-zinc-300 font-black tracking-wider">+{task.recoveryBonus} RCV</span>
-                        )}
                         {task.scheduledBonus > 0 && (
                           <span className="text-[9px] px-1.5 py-0.5 bg-cyan-700 text-white font-black tracking-wider uppercase">📅 +{task.scheduledBonus} 約束達成</span>
                         )}
                         {task.earlyBonus > 0 && (
                           <span className="text-[9px] px-1.5 py-0.5 bg-yellow-500 text-black font-black tracking-wider uppercase">⚡ +{task.earlyBonus} 前倒し</span>
                         )}
-                        {task.longerBonus > 0 && (
-                          <span className="text-[9px] px-1.5 py-0.5 bg-purple-600 text-white font-black tracking-wider">{task.longerLabel} +{task.longerBonus}</span>
-                        )}
                       </div>
                     </div>
+                    {editing ? (
+                      <button onClick={saveEditDone} className="text-[10px] px-2 py-1 rounded bg-white text-black font-black flex-shrink-0">保存</button>
+                    ) : (
+                      <div className="flex flex-col gap-1 flex-shrink-0">
+                        <button onClick={() => { setEditingDoneId(task.id); setEditDoneText(task.text); }} className="text-[10px] px-2 py-1 rounded border border-zinc-700 text-zinc-400 hover:text-white hover:border-zinc-500">編集</button>
+                        <button onClick={() => uncompleteTask(task.id)} className="text-[10px] px-2 py-1 rounded border border-zinc-700 text-zinc-400 hover:text-cyan-300 hover:border-cyan-700">戻す</button>
+                        <button onClick={() => deleteCompletedTask(task.id)} className="text-[10px] px-2 py-1 rounded border border-zinc-700 text-zinc-400 hover:text-red-400 hover:border-red-700">削除</button>
+                      </div>
+                    )}
                   </div>
                 );
               })}
