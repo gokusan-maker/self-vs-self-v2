@@ -643,6 +643,13 @@ export default function SelfVsSelf() {
     }
   }, [activeTaskTimer]);
 
+  // サービスワーカー登録（通知・PWAインストール用） — next-pwaの自動登録が効かないため手動登録
+  useEffect(() => {
+    if (typeof window !== 'undefined' && 'serviceWorker' in navigator) {
+      navigator.serviceWorker.register('/sw.js').catch((e) => console.log('SW register failed', e));
+    }
+  }, []);
+
   // PWAインストール用イベントを捕捉
   useEffect(() => {
     const handler = (e) => { e.preventDefault(); setInstallPrompt(e); };
