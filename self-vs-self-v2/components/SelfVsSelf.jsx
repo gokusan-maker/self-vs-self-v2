@@ -137,6 +137,7 @@ const getLongerBonus = (currentMin, prevMaxMin) => {
 
 const getTaskKey = (text, categoryId) => `${categoryId}::${text.trim().toLowerCase()}`;
 
+// 厳しいコーチのセリフ
 const QUOTES = {
   idle: [
     'KEEP GOING. それしかねえだろ。',
@@ -178,63 +179,121 @@ const QUOTES = {
     'NO RETREAT. 後退はない。前か立ち止まるかだ。',
     'BE UNCOMFORTABLE. 居心地悪い場所に行け。',
     'WAR EVERY DAY. 毎日が戦いだ。',
+    'STOP SCROLLING. その指で人生は変わらねえ。',
+    'EXCUSES ARE LIES. 言い訳はお前がお前につく嘘だ。',
+    'ACTION KILLS FEAR. 動け。恐怖は止まったやつに巣食う。',
+    'YOU PROMISED. 昨日の自分との約束を破る気か。',
+    'SMALL WINS STACK. 小さく勝て。積み上げろ。',
+    'NOBODY CARES. 同情を待つな。結果を出せ。',
+    'TIME IS BLEEDING. 迷ってる今も時間は減ってる。',
+    'BORING WINS. 地味な努力だけが本物だ。',
+    'GET UP. 倒れたなら立て。それだけだ。',
+    'FUTURE YOU IS WATCHING. 一年後のお前が今を見てる。',
+    'KILL \'LATER\'. 「明日から」を今すぐ殺せ。',
+    'PAIN IS TUITION. 痛みは成長の授業料だ。',
+    'BE THE EXCEPTION. みんなと同じなら結果も同じだ。',
+    'NO HALF MEASURES. 中途半端はやらないより悪い。',
+    'SUCK IT UP. 文句を言う暇で1個終わらせろ。',
+    'CONSISTENCY IS KING. 才能より継続が勝つ。',
+    'WORK IN SILENCE. 黙ってやれ。語るのは結果だけだ。',
+    'YESTERDAY IS DEAD. 過去は終わった。今をやれ。',
+    'EARN YOUR REST. 休む資格は働いた者だけにある。',
+    'DISCOMFORT IS GROWTH. 楽な道に成長はねえ。',
+    'STARE IT DOWN. 逃げてる課題を今すぐ見ろ。',
+    'MOTION OVER MOOD. 気分が乗らなくても体を動かせ。',
+    'BUILD THE HABIT. 一回じゃ意味ねえ。毎日やれ。',
+    'CHOOSE HARD. 楽と成長、お前はどっちを選ぶ。',
+    'NO ZERO DAYS. 何もしない日を作るな。',
+    'DELETE THE NOISE. 言い訳も雑念も全部消せ。',
+    'YOU VS YOU. 敵は他人じゃない。昨日のお前だ。',
+    'FINISH IT. 始めたなら終わらせろ。',
+    'STAND TALL. 背筋を伸ばせ。今日を支配しろ。',
+    'STAY HUNGRY. 満足した瞬間に成長は止まる。',
+    'GRIND NOW. 楽しむのは結果を出してからだ。',
+    'BREAK THE LOOP. ダラダラの輪を今ここで断て。',
+    'SHOW UP. 才能より、現れることだ。',
+    'NO SAVIOR. ヒーローは来ない。お前がやれ。',
+    'TODAY DECIDES. 今日の選択が未来を作る。',
+    'DON\'T NEGOTIATE. 自分と交渉するな。ただやれ。',
+    'ATTACK THE DAY. 一日を受け身で過ごすな。',
   ],
   taskAdded: [
     'LIST IS NOTHING. 書いただけじゃ意味ねえ。',
     'NOW EXECUTE. 書いた。次は？やれ。',
     'PLANNERS LOSE. 計画立てるだけのやつは負ける。',
     'STEP IN THE RING. 戦場に上がった。逃げるな。',
+    'PAPER IS CHEAP. 紙の上の決意に価値はねえ。実行しろ。',
+    'CLOCK STARTED. 書いた瞬間からタイマーは動いてる。',
   ],
   taskStart: [
     'EXECUTE. 始めたな。途中でやめるな。',
     'LOCK IN. 集中しろ。',
     'CLOCK IS RUNNING. 時計は動いてる。長くやれ。',
     'NOW IS EVERYTHING. 今この瞬間が全てだ。',
+    'NO PHONE. 手を止めるな。気を散らすな。',
+    'DIVE DEEP. 浅くやるな。底まで潜れ。',
   ],
   smallWin: [
     'NOT ENOUGH. まだ甘い。続けろ。',
     'NEXT STEP. 一歩。次の一歩。',
     'DON\'T SETTLE. これで満足するな。',
     'WARM UP. ウォームアップだ。',
+    'KEEP STACKING. 一個じゃ足りねえ。積め。',
+    'MORE. これは最低ラインだ。',
   ],
   mediumWin: [
     'GOOD. NOT ENOUGH. いいぞ。だがまだ足りない。',
     'THE DEMON\'S SHAKING. お前の中の悪魔が震えてる。',
     'KEEP MOVING. 止まったら負けだ。',
+    'HALFWAY. まだ半分だ。気を抜くな。',
+    'PUSH MORE. ここで止めるな。もう一段上げろ。',
+    'STEADY. 着実だ。だが満足はするな。',
   ],
   bigWin: [
     'THAT\'S IT! 毎日それをやれ！',
     'COMFORT ZONE DESTROYED. 快適ゾーン破壊した。',
     'GO HARDER! まだいけるだろ！',
     'YOU CHANGED TODAY. お前は今日、自分を変えた。',
+    'RESPECT. 今日のお前は本物だ。',
+    'NOW REPEAT IT. 一回で満足するな。明日もだ。',
   ],
   longSession: [
     'DEEP WORK. 長くやったな。それが本物だ。',
     'PROOF OF FOCUS. 集中の証明だ。',
     'TIME INVESTED. 時間をかけた。それが結果になる。',
     'THIS MAKES THE DIFFERENCE. 深く潜った。それが差を生む。',
+    'ENDURANCE. 続けられる者だけが勝つ。',
+    'BUILT DIFFERENT. 長時間こなせる心を作ったな。',
   ],
   beatYesterday: [
     'YESTERDAY YOU WAS WEAK. 昨日のお前は弱かった。今日は強い。',
     'PAST DEFEATED. 過去の自分を倒した。明日はもっと強くなれ。',
     'WIN. DON\'T SETTLE. 勝った。だが満足するな。',
     'BEAT THE OLD YOU. これを毎日続けろ。',
+    'PROGRESS. 昨日を超えた。それが唯一の指標だ。',
+    'ONE UP. 昨日に勝った。次は今日のお前と戦え。',
   ],
   newBest: [
     'NEW RECORD! 限界を上書きした！',
     'NEW BASELINE. これが新しい最低ラインだ。',
     'YOU ARE NEW. お前は今、別人になった。',
+    'CEILING BROKEN. 天井をぶち破ったな。',
+    'PROVE IT AGAIN. 一度の最高は偶然だ。もう一度出せ。',
   ],
   combo: [
     'CONSISTENCY WINS. 継続だ。それが本物の強さだ。',
     'REPEAT IT. 同じことを繰り返せ。それが規律だ。',
     'EVERY DAY. 昨日もやった。今日もやった。明日もやれ。',
     'YOU\'RE BECOMING SOMEONE ELSE. お前は別人になりつつある。',
+    'DON\'T BREAK IT. その鎖を切らすな。',
+    'MOMENTUM. 流れができた。止めるな。',
   ],
   bigCombo: [
     'YOU ARE DIFFERENT NOW. お前は別格になった。',
     'NO ONE CAN COPY THIS. 誰にも真似できない。',
     'LEGEND TERRITORY. 伝説の領域だ。止まるな。',
+    'FORGED IN STEEL. 鋼の習慣ができたな。',
+    'DON\'T GET SOFT. ここまで来て緩むな。',
   ],
   failed: [
     'YOU RAN. 逃げたな。次は逃げるな。',
@@ -242,60 +301,81 @@ const QUOTES = {
     'THE DEMON\'S LAUGHING. お前の中の悪魔が笑ってる。',
     'NO HIDING. 失敗を隠すな。それが弱さの始まりだ。',
     'LOST TODAY. WIN TOMORROW. 明日は同じ場所で勝て。',
+    'REMEMBER THIS. この悔しさを忘れるな。',
+    'GET BACK UP. 倒れた。で？立て。',
   ],
   wakeUp: [
     'HARDEN UP! 起きたな。次は何をやる？',
     'FIRST WIN. ベッドを離れた。最初の戦いに勝った。',
     'MOVE. DON\'T THINK. 起きた。動け。考えるな。',
     'ESCAPE THE TRAP. 布団は甘い罠だ。脱出したな。',
+    'DAY STARTS NOW. 起きた瞬間から勝負だ。',
+    'NO SNOOZE. 二度寝の誘惑に勝ったな。',
   ],
   wakeUpEarly: [
     'WINNER\'S HOUR. これが勝者の起床時間だ！',
     '99% ARE STILL SLEEPING. お前は別格だ。',
     'BEFORE THE SUN. 太陽より先に起きた。',
     'NO ONE\'S HERE. 誰も入れない領域。',
+    'STOLEN TIME. 他人より数時間多く生きてる。',
   ],
   wakeUpLate: [
     'HALF DAY GONE. 半日無駄にした。',
-    'OVERSLEPT. 認めろ。明日は5時に起きろ。',
+    'OVERSLEPT. 認めろ。明日は早く起きろ。',
     'BED WON. 次は勝て。',
+    'CATCH UP NOW. 出遅れた。なら今から倍動け。',
+    'NO MORE. この遅れを今日で終わらせろ。',
   ],
   sleep: [
     'BATTLE DONE. 一日を戦い切ったか。明日はもっと戦え。',
     'REST. DON\'T QUIT. 寝ろ。ただし負けたまま寝るな。',
     'RECOVERY IS A WEAPON. 回復は弱さじゃない。武器だ。',
+    'REVIEW IT. 今日の戦いを振り返って寝ろ。',
+    'RECHARGE. 明日もう一度戦うために休め。',
   ],
   sleepEarly: [
     'PRO RHYTHM. 早寝、早起き。プロのリズムだ。',
-    'DISCIPLINE. 22時前に寝るやつは強い。',
+    'DISCIPLINE. 早く寝るやつは強い。',
     'PHONE DOWN. それが勝者の選択だ。',
+    'SMART MOVE. 明日の自分に投資したな。',
+    'WELL EARNED. 早く休む。それも規律だ。',
   ],
   sleepLate: [
     'YOU\'RE HURTING TOMORROW. 明日の自分の足を引っ張る気か。',
     'GO TO SLEEP. こんな時間まで何してた。',
     'NIGHT OWL = WEAK. 夜更かしは弱さの証明だ。',
+    'FIX IT. このリズムを明日断ち切れ。',
+    'PHONE DOWN NOW. 今すぐ画面を閉じて寝ろ。',
   ],
   badStart: [
     'KEEP IT SHORT. 短く終わらせろ。',
     'CLOCK IS YOUR ENEMY. 長引くほどダメージだ。',
     'STOP IN 5. 5分以内に止めろ。',
     'CUT IT OFF. 早く止めろ。',
+    'YOU KNOW BETTER. これが何か、お前は分かってる。',
+    'TIMER ON. 時間を決めた。守れ。',
   ],
   badShort: [
     'SHORT BURST. 短く終わらせた。だが繰り返すな。',
     'THAT\'S OK. 一瞬で済んだ。それが正解だ。',
-    'UNDER 5. 許容範囲だ。だが油断するな。',
+    'UNDER CONTROL. 許容範囲だ。だが油断するな。',
+    'GOOD STOP. よく止めた。次もそうしろ。',
+    'BACK TO WORK. 終わったな。さっさと戻れ。',
   ],
   badMedium: [
     'TOO LONG. 次はもっと短くしろ。',
     'YOU LOST A TASK. その時間でタスク1個できたぞ。',
     'TIME THIEF. 時間泥棒だ。気づけ。',
+    'NOTICE THIS. ズルズルいった。原因を潰せ。',
+    'NEXT TIME, CUT EARLY. 次は早めに切れ。',
   ],
   badLong: [
     'YOU JUST LOST TO YOURSELF. 自分に負けた。',
     'HOURS GONE. それがお前の人生か？',
     'BIG LOSS. 大きな痛手だ。明日取り返せ。',
     'WEAKNESS WON. 記録して次は勝て。',
+    'FEEL IT. この時間の重さを忘れるな。',
+    'TOMORROW, FIGHT BACK. 明日この分を取り返せ。',
   ],
   recovery: [
     'YOU GOT BACK UP. それが強さだ。',
@@ -303,22 +383,22 @@ const QUOTES = {
     'CAUGHT UP. だが油断するな。',
     'RECOVERY MODE. 負けっぱなしじゃ終わらない。',
     'NEVER QUIT. 弱さに屈しなかった。',
+    'STILL IN IT. まだ終わってない。続けろ。',
   ],
-  // 明日のタスク予約
   scheduled: [
     'PLAN AHEAD. 計画した。あとは実行だけだ。',
     'TOMORROW IS YOURS. 明日の自分にバトンを渡したな。',
     'COMMIT. 約束した。逃げるな。',
     'STRATEGIC MOVE. 賢い動きだ。だが実行が全てだ。',
+    'NOW HONOR IT. 立てた予定は必ず実行しろ。',
   ],
-  // 予約タスクを実行
   scheduledDone: [
     'PROMISE KEPT. 約束を守った。それが本物だ。',
     'YOU SHOWED UP. 昨日の自分に裏切らなかった。',
     'EXECUTED THE PLAN. 計画通り実行した。完璧だ。',
     'CONSISTENCY PAYS. 言ったことをやった。それが信用だ。',
+    'RELIABLE. 計画を守れる男だな。',
   ],
-  // 前倒し実行（明日のタスクを今日のうちに）
   earlyExecution: [
     'AHEAD OF SCHEDULE! 明日の自分に贈り物だ！',
     'CRUSHED IT EARLY. 予定より早い。最強だ。',
@@ -328,16 +408,290 @@ const QUOTES = {
   ],
 };
 
-// セリフ履歴：カテゴリごとに使い切るまで同じセリフを出さない
+// 優しいコーチ（前向き・ポジティブ系）のセリフ
+const QUOTES_POSITIVE = {
+  idle: [
+    'LET\'S GO! 今日もきっといい一日になるよ！',
+    'YOU\'VE GOT THIS. 小さな一歩でも立派な前進だ！',
+    'SHINE TODAY. 君ならできる、信じてるよ！',
+    'GOOD VIBES. 焦らなくていい、自分のペースで！',
+    'FRESH START. いつだって今からがスタートだ！',
+    'KEEP SMILING. 頑張ってる自分を褒めてあげよう！',
+    'ONE STEP. 完璧じゃなくていい、まずやってみよう！',
+    'YOU MATTER. 君の積み重ねは必ず実を結ぶよ！',
+    'TAKE IT EASY. 疲れたら休んでいい、それも前進！',
+    'BELIEVE. うまくいかない日も、君の価値は変わらない！',
+    'SMALL IS BIG. 小さな一歩を、ちゃんと数えよう！',
+    'YOU\'RE ENOUGH. 今のままの君でも十分すごい！',
+    'GENTLE START. 軽い気持ちでひとつ始めてみよう！',
+    'PROUD ALREADY. ここに向き合えてる時点でえらい！',
+    'KEEP GOING. ゆっくりでいい、続けることが力だよ！',
+    'BRIGHT DAY. 今日もきっといいことがあるよ！',
+    'YOUR PACE. 誰かと比べなくていい、君は君だ！',
+    'NICE TO SEE YOU. また来てくれたね、それだけで嬉しい！',
+    'TINY WINS. 今日できそうな小さなことから！',
+    'WARM HEART. 自分にやさしくいこう、ね！',
+    'YOU CAN REST. 頑張りすぎないことも大事だよ！',
+    'TRUST YOURSELF. 君は思ってるよりずっと強い！',
+    'STEP BY STEP. 一歩ずつでちゃんと前に進んでる！',
+    'GOOD ENOUGH. 70点で上等、まず動こう！',
+    'CHEERING YOU. ずっと君を応援してるよ！',
+    'NEW CHANCE. 今この瞬間からやり直せる！',
+    'BE KIND TO YOU. 自分を責めないであげてね！',
+    'YOU SHOWED UP. 開いてくれた、それがもう一歩目！',
+    'LIGHT STEPS. 重く考えず、ふっと始めよう！',
+    'GROWING. 気づかないうちに君は成長してるよ！',
+    'HELLO AGAIN. 今日も一緒に頑張ろうね！',
+    'SOFT POWER. 無理しない強さも本物の強さ！',
+    'ONE THING. ひとつでいい、それで十分だよ！',
+    'YOU\'RE TRYING. 挑もうとしてる、それが素敵だ！',
+    'CALM MIND. 落ち着いて、できることからね！',
+    'HOPE. 今日が昨日より少し良ければ大成功！',
+    'KEEP THE SPARK. 君のやる気の火、大事にしよう！',
+    'NO RUSH. 急がなくていい、止まらなければOK！',
+    'SHINE ON. 君のペースで輝けばいいんだ！',
+    'PROUD OF YOU. ここまで来た君を誇りに思うよ！',
+    'FRESH AIR. 深呼吸して、軽くいこう！',
+    'YOU CHOSE GROWTH. 成長しようとする君が好きだ！',
+    'LITTLE BY LITTLE. 少しずつでちゃんと積み上がる！',
+    'WARM START. 気楽にスタートしてみよう！',
+    'YOU\'RE DOING FINE. 君は十分よくやってるよ！',
+    'GOOD MORNING SOUL. 心にいい一日をあげよう！',
+    'KEEP IT LIGHT. 楽しめる範囲でいこうね！',
+    'STILL HERE. 続けてる君、本当にすごい！',
+    'BRAVE YOU. 向き合うのは勇気がいる、えらいよ！',
+    'SMILE FIRST. まず笑顔、それから一歩！',
+    'YOU\'LL BLOOM. 君はこれから花開くよ！',
+    'TRUST THE PROCESS. 積み重ねは裏切らないよ！',
+    'KIND TO START. やさしい気持ちで始めよう！',
+    'YOU\'RE NOT ALONE. 一人じゃないよ、一緒に！',
+    'GOOD CHOICE. 今日もやろうとしてる、その心が宝物！',
+    'EASY DOES IT. 力まないで、ゆるくいこう！',
+    'HAPPY STEPS. 楽しみながら進もうね！',
+    'YOU\'RE GROWING. 昨日より少し前へ、それで十分！',
+    'BREATHE. 焦らず、ひと呼吸おいてからね！',
+    'CELEBRATE SMALL. 小さな達成も思いきり喜ぼう！',
+    'YOUR DAY. 今日は君のための一日だよ！',
+    'SO PROUD. 何もできなくても、来てくれて嬉しい！',
+    'KEEP HOPE. 大丈夫、きっとうまくいくよ！',
+    'GENTLE PUSH. ほんの少しだけ、背中を押すね！',
+    'YOU\'RE CAPABLE. 君にはちゃんと力があるよ！',
+    'NICE ENERGY. いい調子、その気持ちで！',
+    'REST IS OK. 休む日があってもいいんだよ！',
+    'ONE SMILE. 笑って、肩の力を抜こう！',
+    'YOU\'RE LOVED. 頑張る君を、ちゃんと見てるよ！',
+    'STEADY HEART. あわてないで、君のリズムで！',
+    'BRIGHT FUTURE. 続ければ未来は明るいよ！',
+    'JUST BEGIN. 完璧を待たず、まず始めよう！',
+    'WARMTH WINS. やさしさは弱さじゃない、強さだよ！',
+    'TODAY COUNTS. 今日の小さな努力も全部宝物！',
+    'YOU GOT FAR. ここまで来られたね、すごいよ！',
+  ],
+  taskAdded: [
+    'NICE PLAN! 計画を立てた、それだけで素晴らしい！',
+    'GREAT START. 書き出せたね、もう半分成功だ！',
+    'LOVE IT. やることが見えた、あとは楽しもう！',
+    'GOOD THINKING. ちゃんと考えられたね、えらい！',
+    'ONE BY ONE. 焦らずひとつずつでいいよ！',
+    'WELL DONE. 動き出した君が素敵だ！',
+  ],
+  taskStart: [
+    'HERE WE GO! 始めた君は最高にかっこいい！',
+    'FOCUS TIME. 今この瞬間を大切にいこう！',
+    'YOU STARTED. 一番むずかしい一歩を踏み出せたね！',
+    'GREAT MOVE. 始められた、それがもうすごい！',
+    'ENJOY IT. 楽しみながらやってみよう！',
+    'PROUD! やる気を行動に変えられたね！',
+  ],
+  smallWin: [
+    'WELL DONE! 小さな一歩、ちゃんと前進だよ！',
+    'NICE! その調子、無理せずいこう！',
+    'PROUD OF YOU. ひとつできた、えらい！',
+    'GOOD JOB. 積み重なってるよ、その調子！',
+    'KEEP IT UP. いい流れだね、楽しんで！',
+    'YAY! ひとつ達成、自分を褒めよう！',
+  ],
+  mediumWin: [
+    'AWESOME! しっかりやり切ったね、すごい！',
+    'GREAT JOB. 着実に進んでる、その調子！',
+    'KEEP IT UP. いい流れだよ、楽しんでこう！',
+    'WONDERFUL. ちゃんと前に進めたね！',
+    'SO GOOD. 君の頑張り、ちゃんと届いてるよ！',
+    'NICE WORK. 自分を誇っていいよ！',
+  ],
+  bigWin: [
+    'AMAZING!! 大きな一歩、本当によく頑張った！',
+    'YOU DID IT! 今日の君は輝いてるよ！',
+    'INCREDIBLE. この調子なら何でもできる！',
+    'SO PROUD!! 心から尊敬するよ、すごい！',
+    'BRILLIANT! 大きな達成、おめでとう！',
+    'SHINING! 今日の君は最高だ！',
+  ],
+  longSession: [
+    'DEEP FOCUS! じっくり取り組めたね、立派だよ！',
+    'GREAT EFFORT. 長く続けられた自分を誇ろう！',
+    'SO PROUD. 集中力、ちゃんと育ってるよ！',
+    'WONDERFUL. これだけ向き合えた、すごい！',
+    'STRONG HEART. 続ける力がついてきたね！',
+    'WELL DONE. 長い時間、本当によく頑張った！',
+  ],
+  beatYesterday: [
+    'NEW YOU! 昨日の自分を超えた、最高だ！',
+    'GROWING! 着実に成長してる、すごいよ！',
+    'BEYOND! 一歩リード、その調子でいこう！',
+    'PROGRESS! 昨日より前へ進めたね！',
+    'SO GOOD. ちゃんと伸びてるよ、誇って！',
+    'KEEP RISING. 少しずつ強くなってる！',
+  ],
+  newBest: [
+    'RECORD!! 自己ベスト更新、本当にすごい！',
+    'BRAND NEW. 新しい自分に出会えたね！',
+    'SHINING! 今日の君は過去最高だ！',
+    'WONDERFUL!! 限界を更新したね、おめでとう！',
+    'SO PROUD. 君の努力が形になったよ！',
+  ],
+  combo: [
+    'STREAK! 続けられてる、それが一番の才能！',
+    'CONSISTENT. 毎日の積み重ね、誇っていいよ！',
+    'KEEP GOING. 継続できる君は本物だ！',
+    'GREAT RHYTHM. いいリズムができてるね！',
+    'SO STEADY. コツコツ続く君が素敵だ！',
+    'WELL DONE. その継続、ちゃんとすごいよ！',
+  ],
+  bigCombo: [
+    'LEGEND! ここまで続けた君は本当にすごい！',
+    'UNSTOPPABLE! 君の継続力は宝物だよ！',
+    'WOW!! こんなに続けられるなんて最高！',
+    'AMAZING HABIT. 立派な習慣が育ったね！',
+    'SO PROUD!! 続けた君を心から尊敬するよ！',
+  ],
+  failed: [
+    'IT\'S OK. 認めて記録できた、それも勇気だよ！',
+    'NO WORRIES. 今日はそういう日、明日また一緒に！',
+    'STILL GREAT. 向き合えた君を尊敬するよ！',
+    'NEXT TIME. うまくいかない日もある、大丈夫！',
+    'BE KIND. 自分を責めないであげてね！',
+    'YOU\'RE OK. 失敗しても君の価値は変わらないよ！',
+    'TOMORROW. ひと休みして、また挑戦しよう！',
+  ],
+  wakeUp: [
+    'GOOD MORNING! 起きられたね、いい一日にしよう！',
+    'NICE WAKE-UP. 朝のスタート、よく頑張った！',
+    'FRESH! 起きた君、もう今日の勝者だ！',
+    'WELL DONE. ベッドから出られたね、えらい！',
+    'NEW DAY. 今日も君のペースでいこう！',
+    'SMILE. いい朝だね、深呼吸しよう！',
+  ],
+  wakeUpEarly: [
+    'EARLY BIRD! 早起き最高、すばらしい！',
+    'WONDERFUL! 静かな朝を手に入れたね！',
+    'SHINING MORNING. 早起きできた君は輝いてる！',
+    'GREAT START. 朝の時間、いい使い方だね！',
+    'SO PROUD. 早起き、本当によく頑張った！',
+  ],
+  wakeUpLate: [
+    'NO PROBLEM. 今からでも十分間に合うよ！',
+    'IT\'S FINE. ゆっくりでも一日は始められる！',
+    'STILL GOOD. 起きられたことが大事、いこう！',
+    'DON\'T WORRY. 遅れた分は気にしないで、今からね！',
+    'FRESH NOW. 今この瞬間からがスタートだよ！',
+  ],
+  sleep: [
+    'GOOD NIGHT. 一日おつかれさま、よく頑張った！',
+    'REST WELL. しっかり休むのも大切な力だよ！',
+    'SWEET DREAMS. 今日の自分をねぎらってあげて！',
+    'WELL DONE. 今日も一日えらかったね！',
+    'RELAX. ゆっくり休んで、また明日ね！',
+  ],
+  sleepEarly: [
+    'GREAT RHYTHM! 早寝できた、体が喜んでるよ！',
+    'WONDERFUL. 早めに休めた君は賢い！',
+    'PERFECT. いい睡眠リズム、その調子！',
+    'SO GOOD. 自分を大事にできたね！',
+    'NICE CHOICE. 早く休む、いい判断だよ！',
+  ],
+  sleepLate: [
+    'IT\'S OK. 今日はゆっくり休んでね！',
+    'NO BLAME. 遅くなった日もある、大丈夫！',
+    'REST NOW. 明日のために、もう休もう！',
+    'TAKE CARE. 体を大事に、おやすみなさい！',
+    'DON\'T WORRY. 気にしないで、ゆっくり寝てね！',
+  ],
+  badStart: [
+    'EASY DOES IT. 短く切り上げれば大丈夫だよ！',
+    'YOU GOT THIS. 自分で気づけてる、それが第一歩！',
+    'TAKE A BREATH. 少しならOK、上手に切り上げよう！',
+    'NO GUILT. 息抜きも必要、でも時間は決めようね！',
+    'YOU\'RE AWARE. 気づけてる君はえらいよ！',
+    'SET A LIMIT. ちょっとだけ、と決めていこう！',
+  ],
+  badShort: [
+    'NICE STOP! 短く終われたね、コントロールできてる！',
+    'WELL HANDLED. ちゃんと切り上げられた、えらい！',
+    'GOOD JOB. すぐ戻ってこれた、その調子！',
+    'GREAT CONTROL. 自分を上手に扱えてるよ！',
+    'PROUD! 短く済ませられたね、すごい！',
+  ],
+  badMedium: [
+    'IT\'S OK. 気づけたから次はもっと短くできる！',
+    'NO WORRIES. ここから立て直していこう！',
+    'NEXT ONE. 大丈夫、また切り替えればいい！',
+    'YOU NOTICED. 気づけた、それが大事な一歩！',
+    'FRESH START. ここからまた頑張ろうね！',
+  ],
+  badLong: [
+    'STILL OK. 記録できたこと自体がえらいよ！',
+    'TOMORROW. 今日はここまで、明日また一緒に！',
+    'BE KIND. 自分を責めないで、次にいこう！',
+    'NO BLAME. 誰にでもある日だよ、大丈夫！',
+    'RESET. ここで切り替えれば、もう前進だよ！',
+    'YOU\'RE OK. 君の価値は今日のことで変わらない！',
+  ],
+  recovery: [
+    'YOU BOUNCED BACK! 立て直せた君、本当に強い！',
+    'GREAT COMEBACK. 諦めなかったね、すごいよ！',
+    'PROUD! 落ちても戻ってこれた、それが力だ！',
+    'WONDERFUL. もう一度立ち上がれたね！',
+    'SO STRONG. 折れずに続ける君が素敵だ！',
+    'KEEP GOING. ちゃんと持ち直せたよ！',
+  ],
+  scheduled: [
+    'NICE PLANNING! 先を見据えられたね、賢い！',
+    'GOOD MOVE. 未来の自分が喜んでるよ！',
+    'WELL DONE. 計画した君、もう一歩リードだ！',
+    'GREAT IDEA. 先に決めておくの、いいね！',
+    'SO SMART. 未来の自分への贈り物だね！',
+  ],
+  scheduledDone: [
+    'PROMISE KEPT! 約束を守れた、誇っていいよ！',
+    'AMAZING. 計画どおりできたね、最高！',
+    'SO RELIABLE. 言ったことをやれる君は素敵だ！',
+    'WONDERFUL. 自分との約束、守れたね！',
+    'PROUD! 計画を実行できた、すごいよ！',
+  ],
+  earlyExecution: [
+    'AHEAD!! 前倒しできるなんてすごい！',
+    'WONDERFUL. 未来の自分への贈り物だね！',
+    'BRILLIANT. 早めに動けた君は輝いてる！',
+    'SO GOOD. 予定より早く、立派だよ！',
+    'AMAZING. 先回りできる君、最高だ！',
+  ],
+};
+
+const QUOTE_SETS = { strict: QUOTES, positive: QUOTES_POSITIVE };
+
+// セリフ履歴：コーチタイプ×カテゴリごとに使い切るまで同じセリフを出さない
 const quoteHistory = {};
-const randomQuote = (key) => {
-  const arr = QUOTES[key] || QUOTES.idle;
+const randomQuote = (key, style = 'strict') => {
+  const set = QUOTE_SETS[style] || QUOTES;
+  const arr = set[key] || set.idle;
   if (arr.length <= 1) return arr[0];
-  let used = quoteHistory[key] || [];
+  const hk = style + '|' + key;
+  let used = quoteHistory[hk] || [];
   let pool = arr.filter(q => !used.includes(q));
   if (pool.length === 0) { used = []; pool = arr.slice(); }
   const q = pool[Math.floor(Math.random() * pool.length)];
-  quoteHistory[key] = [...used, q];
+  quoteHistory[hk] = [...used, q];
   return q;
 };
 
@@ -457,6 +811,7 @@ export default function SelfVsSelf() {
   const [isLoading, setIsLoading] = useState(true);
   const [coachQuote, setCoachQuote] = useState(() => randomQuote('idle'));
   const [coachIntense, setCoachIntense] = useState(false);
+  const [coachStyle, setCoachStyle] = useState('strict'); // strict（厳しい） | positive（優しい）
   
   // ダメな行為の開始ダイアログ
   const [badStartDialog, setBadStartDialog] = useState(null); // { categoryId, customMode, customLabel, customEmoji } | null
@@ -479,10 +834,12 @@ export default function SelfVsSelf() {
   // データ読み込み
   useEffect(() => {
     const load = async () => {
+      let loadedCoachStyle = 'strict';
       try {
         const stored = typeof window !== "undefined" ? localStorage.getItem(STORAGE_KEY) : null; const result = stored ? { value: stored } : null;
         if (result && result.value) {
           const d = JSON.parse(result.value);
+          loadedCoachStyle = d.coachStyle || 'strict';
           const today = getTodayStr();
 
           if (d.currentDate !== today) {
@@ -596,7 +953,8 @@ export default function SelfVsSelf() {
       } catch (e) {
         console.log('No saved data');
       }
-      setCoachQuote(randomQuote('idle'));
+      setCoachStyle(loadedCoachStyle);
+      setCoachQuote(randomQuote('idle', loadedCoachStyle));
       setIsLoading(false);
     };
     load();
@@ -612,11 +970,21 @@ export default function SelfVsSelf() {
           currentDate, streak, winCount, lossCount, history, opponentType,
           wakeTime, sleepTime, failedCount, taskCombos, taskMaxDurations, taskHistory,
           activeBadTask, badHistory, todayDamages, todayDamageTotal,
-          todayRecoveryTotal, damageHealed, activeTaskTimer, sleepGoal
+          todayRecoveryTotal, damageHealed, activeTaskTimer, sleepGoal, coachStyle
         }));
       } catch (e) { console.error(e); }
     })();
-  }, [categories, badCategories, tasks, todayPower, totalPower, bestDay, yesterdayPower, currentDate, streak, winCount, lossCount, history, opponentType, wakeTime, sleepTime, failedCount, taskCombos, taskMaxDurations, taskHistory, activeBadTask, badHistory, todayDamages, todayDamageTotal, todayRecoveryTotal, damageHealed, activeTaskTimer, sleepGoal, isLoading]);
+  }, [categories, badCategories, tasks, todayPower, totalPower, bestDay, yesterdayPower, currentDate, streak, winCount, lossCount, history, opponentType, wakeTime, sleepTime, failedCount, taskCombos, taskMaxDurations, taskHistory, activeBadTask, badHistory, todayDamages, todayDamageTotal, todayRecoveryTotal, damageHealed, activeTaskTimer, sleepGoal, coachStyle, isLoading]);
+
+  // 「今日の自分」をイベント合計（今日のバランス）に常に一致させる — ズレを自動補正
+  useEffect(() => {
+    if (isLoading) return;
+    const net = buildTodayEvents().reduce((s, e) => s + e.points, 0);
+    if (net !== todayPower) {
+      setTotalPower(totalPower - todayPower + net);
+      setTodayPower(net);
+    }
+  }, [tasks, wakeTime, sleepTime, todayDamages, todayPower, totalPower, isLoading]);
 
   // ダメタスクのタイマー（秒単位でリアルタイム更新＋通知）
   useEffect(() => {
@@ -717,6 +1085,41 @@ export default function SelfVsSelf() {
     return { label: bc.label, emoji: bc.emoji };
   };
 
+  // === 習慣的なタスク（繰り返し）===
+  const isHabitTask = (t) => !!(t.repeat && t.repeat !== 'none');
+  const habitDoneToday = (t) => t.habitDoneDate === todayISO();
+  const habitDue = (t) => {
+    if (habitDoneToday(t)) return false;
+    if (t.repeat === 'weekly') {
+      if (!t.habitDoneDate) return true;
+      return (Date.now() - new Date(t.habitDoneDate).getTime()) / 86400000 >= 7;
+    }
+    return true; // daily
+  };
+
+  // 今日のイベント一覧（タスク・起床/就寝・ダメージ）— 「今日のバランス」と「今日の自分」で共通利用
+  const buildTodayEvents = () => {
+    const evts = [];
+    tasks.forEach(t => {
+      if (t.failed) return;
+      if (isHabitTask(t)) {
+        if (habitDoneToday(t)) evts.push({ label: '🔁 ' + t.text, points: t.habitPower || 0 });
+        return;
+      }
+      const p = (t.completed ? (t.powerEarned || 0) : 0) + (t.partialDone ? (t.partialPower || 0) : 0) + (t.planBonus || 0);
+      if (!t.completed && p === 0) return;
+      let label = t.text;
+      if (!t.completed) label += t.partialDone ? '（着手）' : '（計画）';
+      evts.push({ label, points: p });
+    });
+    if (wakeTime) evts.push({ label: `${wakeTime.time} 起床`, points: wakeTime.power || 0 });
+    if (sleepTime) evts.push({ label: `${sleepTime.time} 就寝`, points: sleepTime.power || 0 });
+    todayDamages.forEach(d => { const disp = getBadDisplay(d); evts.push({ label: `${disp.emoji} ${disp.label} ${formatDuration(d.minutes)}`, points: -(d.damage || 0) }); });
+    return evts;
+  };
+  // 「今日の自分」= 今日のイベント合計（= 今日のバランスの差し引き）。両者を常に一致させる
+  const todayNetComputed = buildTodayEvents().reduce((s, e) => s + e.points, 0);
+
   const getRank = () => {
     let r = RANKS[0];
     for (const rank of RANKS) if (totalPower >= rank.min) r = rank;
@@ -742,7 +1145,7 @@ export default function SelfVsSelf() {
   const damageRemaining = Math.max(0, todayDamageTotal - damageHealed);
 
   const triggerCoach = (key, intense = false) => {
-    setCoachQuote(randomQuote(key));
+    setCoachQuote(randomQuote(key, coachStyle));
     setCoachIntense(intense);
     setTimeout(() => setCoachIntense(false), 4000);
   };
@@ -764,28 +1167,42 @@ export default function SelfVsSelf() {
 
   const addTask = (scheduledDate = '') => {
     if (!newTask.trim() || categories.length === 0) return;
-    const sd = scheduledDate || '';
-    const isFuture = sd && sd > todayISO();
-    const task = {
-      id: Date.now().toString(),
-      text: newTask.trim(),
-      categoryId: newCategoryId,
-      difficulty: newDifficulty,
-      completed: false,
-      scheduledDate: sd || null,            // 予定日（YYYY-MM-DD）。null/今日 は当日タスク
-      forTomorrow: isFuture,                // 互換用
-      planBonus: isFuture ? 5 : 0,
-      repeat: newRepeat,                    // none | daily | weekly
-      gained: isFuture ? 5 : 0,             // このタスクが加算したポイント実額
-    };
+    const isHabit = newRepeat !== 'none';
+    let task;
+    if (isHabit) {
+      // 習慣的なタスク（毎日/毎週）— 予定日は持たず、くり返し表示される
+      task = {
+        id: Date.now().toString(),
+        text: newTask.trim(),
+        categoryId: newCategoryId,
+        difficulty: newDifficulty,
+        completed: false,
+        repeat: newRepeat,
+        habitDoneDate: null,
+      };
+    } else {
+      const sd = scheduledDate || '';
+      const isFuture = sd && sd > todayISO();
+      task = {
+        id: Date.now().toString(),
+        text: newTask.trim(),
+        categoryId: newCategoryId,
+        difficulty: newDifficulty,
+        completed: false,
+        scheduledDate: sd || null,
+        forTomorrow: isFuture,
+        planBonus: isFuture ? 5 : 0,
+        repeat: 'none',
+        gained: isFuture ? 5 : 0,
+      };
+    }
     setTasks([task, ...tasks]);
     addToHistory(newTask, newCategoryId, newDifficulty);
     setNewTask('');
     setNewScheduledDate('');
     setNewRepeat('none');
 
-    if (isFuture) {
-      // 計画ボーナス +5 PWR（先に予定を立てた報酬）
+    if (!isHabit && task.planBonus > 0) {
       setTodayPower(todayPower + 5);
       setTotalPower(totalPower + 5);
       triggerCoach('scheduled', true);
@@ -911,24 +1328,7 @@ export default function SelfVsSelf() {
       longerLabel: longerBonus.label,
       gained: (x.gained || 0) + finalPower,
     } : x);
-    // 定期タスクなら次回分を自動生成（毎日→翌日 / 毎週→7日後）
-    if (t.repeat && t.repeat !== 'none') {
-      const nextDate = t.repeat === 'weekly' ? dateAfter(7) : dateAfter(1);
-      setTasks([{
-        id: 'rep_' + Date.now(),
-        text: t.text,
-        categoryId: t.categoryId,
-        difficulty: t.difficulty,
-        completed: false,
-        scheduledDate: nextDate,
-        forTomorrow: true,
-        planBonus: 0,
-        repeat: t.repeat,
-        gained: 0,
-      }, ...updatedTasks]);
-    } else {
-      setTasks(updatedTasks);
-    }
+    setTasks(updatedTasks);
     setTaskCombos({ ...taskCombos, [key]: { count: newCombo, lastDate: today } });
     
     // 過去最長時間を更新
@@ -977,6 +1377,39 @@ export default function SelfVsSelf() {
         taskText: t.text,
       });
     }
+  };
+
+  // 習慣タスクの完了 / 取り消し（毎日・毎週くり返し）
+  const toggleHabit = (id) => {
+    const t = tasks.find(x => x.id === id);
+    if (!t || !isHabitTask(t)) return;
+    const today = todayISO();
+    if (t.habitDoneDate === today) {
+      setTasks(tasks.map(x => x.id === id ? { ...x, habitDoneDate: null, habitPower: 0 } : x));
+      return;
+    }
+    const basePower = DIFFICULTIES[t.difficulty].power;
+    const key = getTaskKey(t.text, t.categoryId);
+    const todayStr = getTodayStr();
+    const yesterday = new Date(Date.now() - 86400000).toDateString();
+    const existing = taskCombos[key];
+    let newCombo;
+    if (existing && existing.lastDate === yesterday) newCombo = existing.count + 1;
+    else if (existing && existing.lastDate === todayStr) newCombo = existing.count;
+    else newCombo = 1;
+    const cb = getComboBonus(newCombo);
+    const pts = Math.round(basePower * cb.mult);
+    setTasks(tasks.map(x => x.id === id ? { ...x, habitDoneDate: today, habitPower: pts, habitComboAt: newCombo } : x));
+    setTaskCombos({ ...taskCombos, [key]: { count: newCombo, lastDate: todayStr } });
+    if (newCombo >= 10) triggerCoach('bigCombo', true);
+    else if (newCombo >= 3) triggerCoach('combo', true);
+    else triggerCoach('smallWin');
+    const items = [];
+    if (newCombo >= 2) {
+      const cv = pts - basePower;
+      if (cv > 0) items.push({ label: `${newCombo}日連続 ×${cb.mult}`, points: cv, color: 'from-orange-400 to-red-500', emoji: '🔥' });
+    }
+    setBonusPopup({ items, basePoints: basePower, totalPoints: pts, taskText: t.text });
   };
 
   // 未完了で終了 — 着手ボーナスを付与し、タスクは一覧に残す（完了にはしない）
@@ -1332,10 +1765,11 @@ export default function SelfVsSelf() {
     const db = b.scheduledDate || _ti;
     return da < db ? -1 : da > db ? 1 : 0;
   };
-  const futureTasks = tasks.filter(t => !t.completed && !t.failed && t.scheduledDate && t.scheduledDate > _ti).sort(_byDate);
-  const activeTasks = tasks.filter(t => !t.completed && !t.failed && !(t.scheduledDate && t.scheduledDate > _ti)).sort(_byDate);
-  const completedTasks = tasks.filter(t => t.completed);
-  const failedTasks = tasks.filter(t => t.failed);
+  const habitTasks = tasks.filter(t => isHabitTask(t));
+  const futureTasks = tasks.filter(t => !isHabitTask(t) && !t.completed && !t.failed && t.scheduledDate && t.scheduledDate > _ti).sort(_byDate);
+  const activeTasks = tasks.filter(t => !isHabitTask(t) && !t.completed && !t.failed && !(t.scheduledDate && t.scheduledDate > _ti)).sort(_byDate);
+  const completedTasks = tasks.filter(t => !isHabitTask(t) && t.completed);
+  const failedTasks = tasks.filter(t => !isHabitTask(t) && t.failed);
 
   // 今日の戦闘時間（タイマー計測したタスクの合計）と敗北時間（ダメタスク合計）
   const battleMinutes = completedTasks.reduce((sum, t) => sum + (t.durationMinutes || 0), 0)
@@ -1397,7 +1831,7 @@ export default function SelfVsSelf() {
         {/* コーチ */}
         <div className={`mb-4 rounded-2xl border-2 ${coachIntense ? 'border-red-500 animate-pulse' : 'border-zinc-700'} bg-gradient-to-br from-zinc-900 to-black p-4`}>
           <div className="flex gap-3 items-start">
-            <div className="text-4xl flex-shrink-0">{coachIntense ? '😤' : '👨🏿‍🦲'}</div>
+            <div className="text-4xl flex-shrink-0">{coachStyle === 'positive' ? (coachIntense ? '🤩' : '😊') : (coachIntense ? '😤' : '👨🏿‍🦲')}</div>
             <div className="flex-1 min-w-0">
               <div className="text-xs text-red-500 font-bold tracking-wider mb-1">COACH / コーチ</div>
               <div className={`font-bold leading-tight ${coachIntense ? 'text-red-300 text-lg' : 'text-zinc-200'}`}>「{coachQuote}」</div>
@@ -1441,14 +1875,7 @@ export default function SelfVsSelf() {
         {/* 今日のバランス（プラス / マイナス） */}
         <div className="mb-4 rounded-2xl border border-zinc-800 bg-zinc-900/50 p-4">
           {(() => {
-            const evts = [];
-            tasks.forEach(t => {
-              if (t.completed) evts.push({ label: t.text, points: (t.powerEarned || 0) + (t.partialDone ? (t.partialPower || 0) : 0) });
-              else if (t.partialDone) evts.push({ label: t.text + '（着手）', points: t.partialPower || 0 });
-            });
-            if (wakeTime) evts.push({ label: `${wakeTime.time} 起床`, points: wakeTime.power || 0 });
-            if (sleepTime) evts.push({ label: `${sleepTime.time} 就寝`, points: sleepTime.power || 0 });
-            todayDamages.forEach(d => { const disp = getBadDisplay(d); evts.push({ label: `${disp.emoji} ${disp.label} ${formatDuration(d.minutes)}`, points: -(d.damage || 0) }); });
+            const evts = buildTodayEvents();
             const plusTotal = evts.filter(e => e.points > 0).reduce((s, e) => s + e.points, 0);
             const minusTotal = evts.filter(e => e.points < 0).reduce((s, e) => s - e.points, 0);
             const sum = plusTotal + minusTotal;
@@ -1546,7 +1973,7 @@ export default function SelfVsSelf() {
                 </button>
               ))}
             </div>
-            {/* 予定日の指定（今日 / 日付を指定 の2択） */}
+            {newRepeat === 'none' && (
             <div className="flex flex-wrap items-center gap-1.5 mb-2">
               <button onClick={() => setNewScheduledDate('')} className={`px-3.5 py-1.5 rounded-lg text-[11px] font-bold border-2 transition ${!newScheduledDate ? 'bg-gradient-to-r from-blue-600 to-cyan-600 text-white border-transparent shadow-md scale-105' : 'bg-zinc-800 text-zinc-400 border-zinc-700 hover:border-zinc-500'}`}>
                 今日
@@ -1564,7 +1991,8 @@ export default function SelfVsSelf() {
                 />
               )}
             </div>
-            {/* 繰り返し（定期タスク） */}
+            )}
+            {/* 繰り返し（定期的なタスク） */}
             <div className="flex flex-wrap items-center gap-1.5 mb-2">
               <span className="text-[10px] text-zinc-500 font-bold mr-0.5">🔁 繰り返し</span>
               {REPEAT_OPTIONS.map(([val, label]) => (
@@ -1574,8 +2002,10 @@ export default function SelfVsSelf() {
               ))}
             </div>
             <div className="flex gap-2">
-              <button onClick={() => addTask(newScheduledDate)} disabled={!newTask.trim()} className={`flex-1 text-white font-black tracking-wider py-3 rounded-lg disabled:opacity-30 disabled:cursor-not-allowed transition active:scale-95 shadow-md flex items-center justify-center gap-1.5 ${newScheduledDate && newScheduledDate > todayISO() ? 'bg-gradient-to-r from-blue-600 to-cyan-600 hover:from-blue-500 hover:to-cyan-500' : 'bg-gradient-to-r from-red-600 to-orange-600 hover:from-red-500 hover:to-orange-500'}`}>
-                {newScheduledDate && newScheduledDate > todayISO() ? (
+              <button onClick={() => addTask(newScheduledDate)} disabled={!newTask.trim()} className={`flex-1 text-white font-black tracking-wider py-3 rounded-lg disabled:opacity-30 disabled:cursor-not-allowed transition active:scale-95 shadow-md flex items-center justify-center gap-1.5 ${newRepeat !== 'none' ? 'bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-500 hover:to-pink-500' : (newScheduledDate && newScheduledDate > todayISO() ? 'bg-gradient-to-r from-blue-600 to-cyan-600 hover:from-blue-500 hover:to-cyan-500' : 'bg-gradient-to-r from-red-600 to-orange-600 hover:from-red-500 hover:to-orange-500')}`}>
+                {newRepeat !== 'none' ? (
+                  <>🔁 定期的なタスクを追加（{newRepeat === 'daily' ? '毎日' : '毎週'}）</>
+                ) : newScheduledDate && newScheduledDate > todayISO() ? (
                   <><CalendarPlus className="w-4 h-4" />{formatSchedDate(newScheduledDate)}に予定を追加 （計画+5）</>
                 ) : (
                   <>➕ 今日のタスクを追加</>
@@ -1634,6 +2064,12 @@ export default function SelfVsSelf() {
             </div>
           )}
 
+          {/* 最新のタスク */}
+          {activeTasks.length > 0 && (
+            <div className="mb-2">
+              <div className="text-xs text-zinc-300 tracking-[0.2em] mb-2 font-black uppercase flex items-center gap-1.5 px-1">
+                📋 最新のタスク ({activeTasks.length})
+              </div>
           {activeTasks.map(task => {
             const cat = getCategory(task.categoryId);
             const diff = DIFFICULTIES[task.difficulty];
@@ -1680,6 +2116,45 @@ export default function SelfVsSelf() {
               </div>
             );
           })}
+            </div>
+          )}
+
+          {/* 定期的なタスク（毎日・毎週くり返し） */}
+          {habitTasks.length > 0 && (
+            <div className="mb-2">
+              <div className="text-xs text-purple-300 tracking-[0.2em] mb-2 font-black uppercase flex items-center gap-1.5 px-1">
+                🔁 定期的なタスク ({habitTasks.length})
+              </div>
+              {habitTasks.map(task => {
+                const cat = getCategory(task.categoryId);
+                const diff = DIFFICULTIES[task.difficulty];
+                const doneToday = habitDoneToday(task);
+                const due = habitDue(task);
+                return (
+                  <div key={task.id} className={`rounded-xl p-3 flex items-center gap-2 mb-2 border-2 ${doneToday ? 'bg-zinc-900/60 border-zinc-800' : 'bg-gradient-to-br from-purple-900/40 to-pink-900/20 border-purple-600/60'}`}>
+                    <button onClick={() => toggleHabit(task.id)} className={`w-9 h-9 rounded-lg border-2 flex items-center justify-center transition active:scale-90 flex-shrink-0 ${doneToday ? 'border-purple-500 bg-purple-700/60' : 'border-purple-400 hover:bg-purple-500/20'}`} title={doneToday ? '完了を取り消す' : '完了にする'}>
+                      <Check className={`w-4 h-4 ${doneToday ? 'text-white' : 'text-purple-300'}`} />
+                    </button>
+                    <div className="flex-1 min-w-0">
+                      <div className={`font-bold break-words tracking-wide ${doneToday ? 'text-zinc-500 line-through' : 'text-purple-50'}`}>{task.text}</div>
+                      <div className="flex flex-wrap gap-1 mt-1">
+                        <span className="text-[9px] px-1.5 py-0.5 rounded bg-purple-700 text-white font-black tracking-wider">{repeatLabel(task.repeat)}</span>
+                        <span className={`text-[9px] px-1.5 py-0.5 rounded bg-gradient-to-r ${cat.color} text-white font-bold`}>{cat.emoji} {cat.label}</span>
+                        {doneToday
+                          ? <span className="text-[9px] px-1.5 py-0.5 rounded bg-purple-600 text-white font-black tracking-wider">✓ 完了 +{task.habitPower || 0}</span>
+                          : due
+                            ? <span className="text-[9px] px-1.5 py-0.5 rounded border border-purple-500 text-purple-200 font-black tracking-wider">今日やる +{diff.power}</span>
+                            : <span className="text-[9px] px-1.5 py-0.5 rounded bg-zinc-800 text-zinc-500 font-bold tracking-wider">今週は完了済み</span>}
+                      </div>
+                    </div>
+                    <button onClick={() => deleteTask(task.id)} className="p-1 text-zinc-600 hover:text-red-400 flex-shrink-0" title="削除">
+                      <Trash2 className="w-3.5 h-3.5" />
+                    </button>
+                  </div>
+                );
+              })}
+            </div>
+          )}
 
           {failedTasks.length > 0 && (
             <div className="pt-3 mt-3 border-t border-red-900/40">
@@ -2343,6 +2818,14 @@ export default function SelfVsSelf() {
                   ))}
                   <button onClick={() => openCategoryEditor()} className="w-full py-3 rounded-lg border-2 border-dashed border-zinc-700 text-zinc-400 hover:text-white hover:border-zinc-500 font-bold">+ 新しいカテゴリ</button>
                   <button onClick={() => { setShowSettings(false); setShowBadSettings(true); }} className="w-full mt-4 py-3 rounded-lg border-2 border-dashed border-red-900 text-red-500 hover:text-red-300 hover:border-red-700 font-bold">⚠ ダメな行為カテゴリを編集</button>
+                  <div className="mt-6 pt-4 border-t border-zinc-800">
+                    <div className="text-xs text-zinc-500 font-bold tracking-wider mb-2">コーチのタイプ</div>
+                    <div className="flex gap-2">
+                      <button onClick={() => setCoachStyle('strict')} className={`flex-1 py-3 rounded-lg border-2 font-bold transition ${coachStyle === 'strict' ? 'bg-gradient-to-r from-red-600 to-orange-600 text-white border-transparent shadow-md' : 'bg-zinc-800 text-zinc-400 border-zinc-700'}`}>😤 厳しいコーチ</button>
+                      <button onClick={() => setCoachStyle('positive')} className={`flex-1 py-3 rounded-lg border-2 font-bold transition ${coachStyle === 'positive' ? 'bg-gradient-to-r from-emerald-500 to-green-600 text-white border-transparent shadow-md' : 'bg-zinc-800 text-zinc-400 border-zinc-700'}`}>😊 優しいコーチ</button>
+                    </div>
+                    <div className="text-[10px] text-zinc-600 mt-1.5">{coachStyle === 'strict' ? '本音でガンガン背中を押すスパルタタイプ' : '前向きに励まして応援してくれるタイプ'}</div>
+                  </div>
                   <div className="mt-6 pt-4 border-t border-zinc-800 space-y-2">
                     <button onClick={doInstall} className="w-full py-3 rounded-lg bg-gradient-to-r from-blue-600 to-cyan-600 text-white font-black">📲 アプリをインストール</button>
                     <button onClick={resetToday} className="w-full py-3 rounded-lg border border-zinc-700 text-zinc-400 hover:text-red-300 hover:border-red-700 font-bold">今日の記録をリセット</button>
