@@ -581,13 +581,33 @@ export default function SelfVsSelf() {
     })();
   }, [categories, badCategories, tasks, todayPower, totalPower, bestDay, yesterdayPower, currentDate, streak, winCount, lossCount, history, opponentType, wakeTime, sleepTime, failedCount, taskCombos, taskMaxDurations, taskHistory, activeBadTask, badHistory, todayDamages, todayDamageTotal, todayRecoveryTotal, damageHealed, activeTaskTimer, sleepGoal, isLoading]);
 
-  // ダメタスクのタイマー（秒単位でリアルタイム更新）
+  // ダメタスクのタイマー（秒単位でリアルタイム更新＋通知）
   useEffect(() => {
     if (!activeBadTask) { setCurrentBadTimer(0); setCurrentBadSeconds(0); return; }
+    const limitSec = (activeBadTask.limitMinutes || 0) * 60;
+    let warned = false, over = false;
+    const notify = (title, body) => {
+      try {
+        if (typeof window !== 'undefined' && 'Notification' in window && Notification.permission === 'granted') {
+          new Notification(title, { body });
+        }
+      } catch (e) {}
+    };
     const update = () => {
       const sec = Math.floor((Date.now() - activeBadTask.startedAt) / 1000);
       setCurrentBadSeconds(sec);
       setCurrentBadTimer(Math.floor(sec / 60));
+      if (limitSec > 0) {
+        const label = getBadDisplay(activeBadTask).label;
+        if (!warned && limitSec > 60 && sec >= limitSec - 60 && sec < limitSec) {
+          warned = true;
+          notify('まもなく宣言時間', `「${label}」の宣言時間まであと1分です`);
+        }
+        if (!over && sec >= limitSec) {
+          over = true;
+          notify('宣言時間オーバー', `「${label}」が宣言した${activeBadTask.limitMinutes}分を過ぎています。早く止めましょう`);
+        }
+      }
     };
     update();
     const interval = setInterval(update, 1000);
@@ -1019,6 +1039,11 @@ export default function SelfVsSelf() {
   // ダメタスク本当に開始（制限時間設定後）
   const confirmStartBadTask = (limitMinutes) => {
     if (!badStartDialog || !limitMinutes || limitMinutes < 1) return;
+    try {
+      if (typeof window !== 'undefined' && 'Notification' in window && Notification.permission === 'default') {
+        Notification.requestPermission();
+      }
+    } catch (e) {}
     
     let taskInfo;
     if (badStartDialog.customMode) {
@@ -1319,6 +1344,167 @@ export default function SelfVsSelf() {
               </button>
             </div>
           </div>
+        </div>
+
+        {/* タスクリスト */}
+        <div className="space-y-2">
+          {activeTasks.length === 0 && completedTasks.length === 0 && failedTasks.length === 0 && (
+            <div className="border border-dashed border-zinc-800 p-8 text-center">
+              <div className="text-zinc-600 text-[10px] tracking-[0.3em] uppercase font-black">No Tasks Queued</div>
+              <div className="text-zinc-700 text-[9px] tracking-wider uppercase mt-1">Define Your Mission</div>
+            </div>
+          )}
+          {/* 明日のタスク（予約） */}
+          {activeTasks.filter(t => t.forTomorrow).length > 0 && (
+            <div className="mb-2">
+              <div className="text-xs text-cyan-300 tracking-[0.2em] mb-2 font-black uppercase flex items-center gap-1.5 px-1">
+                <CalendarPlus className="w-3.5 h-3.5" />
+                明日やる予定 ({activeTasks.filter(t => t.forTomorrow).length}) 
+                <span className="text-yellow-400 text-[10px] ml-auto">⚡ 今やると+15ボーナス</span>
+              </div>
+              {activeTasks.filter(t => t.forTomorrow).map(task => {
+                const cat = getCategory(task.categoryId);
+                const diff = DIFFICULTIES[task.difficulty];
+                return (
+                  <div key={task.id} className="bg-gradient-to-br from-blue-900/40 to-cyan-900/30 border-2 border-blue-600/60 rounded-xl p-3 flex items-center gap-2 mb-2">
+                    <button onClick={() => completeTask(task.id)} className="w-9 h-9 rounded-lg border-2 border-cyan-500 hover:border-yellow-400 hover:bg-yellow-500/20 bg-blue-800/50 flex items-center justify-center transition active:scale-90 flex-shrink-0" title="今すぐ実行（前倒しボーナス+15）">
+                      <Check className="w-4 h-4 text-cyan-300" />
+                    </button>
+                    <div className="flex-1 min-w-0">
+                      <div className="font-bold text-cyan-50 break-words tracking-wide">{task.text}</div>
+                      <div className="flex flex-wrap gap-1 mt-1">
+                        <span className={`text-[9px] px-1.5 py-0.5 rounded bg-gradient-to-r ${cat.color} text-white font-bold`}>{cat.emoji} {cat.label}</span>
+                        <span className="text-[9px] px-1.5 py-0.5 rounded border border-cyan-600 text-cyan-200 font-black tracking-wider">明日: +{diff.power}</span>
+                        <span className="text-[9px] px-1.5 py-0.5 rounded bg-yellow-500 text-black font-black tracking-wider">⚡ 今やる +15</span>
+                      </div>
+                    </div>
+                    <button onClick={() => deleteTask(task.id)} className="p-1 text-cyan-700 hover:text-red-400 flex-shrink-0" title="削除">
+                      <Trash2 className="w-3.5 h-3.5" />
+                    </button>
+                  </div>
+                );
+              })}
+            </div>
+          )}
+
+          {activeTasks.filter(t => !t.forTomorrow).map(task => {
+            const cat = getCategory(task.categoryId);
+            const diff = DIFFICULTIES[task.difficulty];
+            const key = getTaskKey(task.text, task.categoryId);
+            const currentCombo = taskCombos[key]?.count || 0;
+            const yesterday = new Date(Date.now() - 86400000).toDateString();
+            const nextCombo = taskCombos[key]?.lastDate === yesterday ? currentCombo + 1 : (taskCombos[key]?.lastDate === getTodayStr() ? currentCombo : 1);
+            const bonus = getComboBonus(nextCombo);
+            const projectedPower = Math.round(diff.power * bonus.mult) + (task.scheduledFor === 'today' ? 10 : 0);
+            const isTiming = activeTaskTimer?.taskId === task.id;
+            const isScheduled = task.scheduledFor === 'today';
+            return (
+              <div key={task.id} className={`bg-zinc-950 border ${isTiming ? 'border-white' : isScheduled ? 'border-cyan-700' : 'border-zinc-800'} rounded-xl p-3 flex items-center gap-2`}>
+                <button onClick={() => completeTask(task.id)} disabled={isTiming} className="w-9 h-9 rounded-lg border-2 border-zinc-700 hover:border-white hover:bg-white/5 flex items-center justify-center transition active:scale-90 flex-shrink-0 disabled:opacity-30" title="完了">
+                  <Check className="w-4 h-4 text-zinc-600" />
+                </button>
+                <div className="flex-1 min-w-0">
+                  <div className="font-bold text-white break-words tracking-wide">{task.text}</div>
+                  <div className="flex flex-wrap gap-1 mt-1">
+                    {isScheduled && <span className="text-[9px] px-1.5 py-0.5 rounded bg-cyan-700 text-white font-black tracking-wider uppercase">📅 予約済み</span>}
+                    <span className={`text-[9px] px-1.5 py-0.5 rounded bg-gradient-to-r ${cat.color} text-white font-bold`}>{cat.emoji} {cat.label}</span>
+                    <span className="text-[9px] px-1.5 py-0.5 rounded border border-zinc-700 text-zinc-400 font-black tracking-wider">+{projectedPower}</span>
+                    {bonus.label && <span className="text-[9px] px-1.5 py-0.5 rounded bg-orange-900/40 border border-orange-700 text-orange-300 font-bold">{bonus.label} x{bonus.mult}</span>}
+                    {isScheduled && <span className="text-[9px] px-1.5 py-0.5 rounded bg-cyan-900/50 text-cyan-300 font-black tracking-wider">+10 実行</span>}
+                    {taskMaxDurations[key] > 0 && (
+                      <span className="text-[9px] px-1.5 py-0.5 rounded bg-purple-900/40 border border-purple-700 text-purple-300 font-bold">⏱️ ベスト{formatDuration(taskMaxDurations[key])} 超で +ボーナス</span>
+                    )}
+                  </div>
+                </div>
+                {!isTiming && !activeTaskTimer && (
+                  <button onClick={() => startTask(task.id)} className="w-9 h-9 rounded-lg border border-zinc-700 hover:border-white hover:bg-white/5 flex items-center justify-center transition active:scale-90 flex-shrink-0" title="タイマー開始">
+                    <Play className="w-3.5 h-3.5 text-white" />
+                  </button>
+                )}
+                <button onClick={() => failTask(task.id)} className="w-9 h-9 rounded-lg border border-zinc-800 hover:border-red-600 hover:bg-red-600/10 flex items-center justify-center transition active:scale-90 flex-shrink-0" title="敗北として記録">
+                  <XCircle className="w-3.5 h-3.5 text-zinc-600" />
+                </button>
+                <button onClick={() => deleteTask(task.id)} className="p-1 text-zinc-700 hover:text-zinc-400 flex-shrink-0" title="削除">
+                  <Trash2 className="w-3.5 h-3.5" />
+                </button>
+              </div>
+            );
+          })}
+
+          {failedTasks.length > 0 && (
+            <div className="pt-3 mt-3 border-t border-red-900/40">
+              <div className="text-[10px] text-red-500 tracking-[0.3em] mb-2 font-black uppercase">⚠ Defeated ({failedTasks.length})</div>
+              {failedTasks.map(task => {
+                const cat = getCategory(task.categoryId);
+                return (
+                  <div key={task.id} className="bg-zinc-950 border border-red-900/60 p-3 flex items-center gap-3 mb-2">
+                    <div className="w-9 h-9 border-2 border-red-700 flex items-center justify-center flex-shrink-0">
+                      <XCircle className="w-4 h-4 text-red-500" />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <div className="font-bold text-zinc-400 break-words tracking-wide">{task.text}</div>
+                      <div className="flex gap-1 mt-1">
+                        <span className="text-[9px] px-1.5 py-0.5 bg-zinc-800 text-zinc-500 tracking-wider uppercase">{cat.label}</span>
+                        <span className="text-[9px] px-1.5 py-0.5 bg-red-900/40 text-red-400 font-black tracking-wider uppercase">Defeat</span>
+                      </div>
+                    </div>
+                    <button onClick={() => deleteTask(task.id)} className="p-2 text-zinc-700 hover:text-red-500 flex-shrink-0">
+                      <Trash2 className="w-4 h-4" />
+                    </button>
+                  </div>
+                );
+              })}
+            </div>
+          )}
+
+          {completedTasks.length > 0 && (
+            <div className="pt-3 mt-3 border-t border-zinc-800">
+              <div className="text-[10px] text-zinc-500 tracking-[0.3em] mb-2 font-black uppercase">⬢ Completed ({completedTasks.length})</div>
+              {completedTasks.map(task => {
+                const cat = getCategory(task.categoryId);
+                const editing = editingDoneId === task.id;
+                return (
+                  <div key={task.id} className="bg-zinc-950 border border-zinc-800/60 p-3 flex items-center gap-2 mb-2">
+                    <div className="w-9 h-9 border-2 border-white flex items-center justify-center flex-shrink-0">
+                      <Check className="w-4 h-4 text-white" />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      {editing ? (
+                        <input type="text" value={editDoneText} onChange={(e) => setEditDoneText(e.target.value)} onKeyDown={(e) => e.key === 'Enter' && saveEditDone()} autoFocus className="w-full bg-black border border-zinc-600 rounded px-2 py-1 text-white text-sm focus:border-white focus:outline-none" />
+                      ) : (
+                        <div className="font-bold line-through text-zinc-500 break-words tracking-wide">{task.text}</div>
+                      )}
+                      <div className="flex flex-wrap gap-1 mt-1">
+                        <span className="text-[9px] px-1.5 py-0.5 bg-zinc-800 text-zinc-400 tracking-wider uppercase">{cat.label}</span>
+                        <span className="text-[9px] px-1.5 py-0.5 bg-white text-black font-black tracking-wider font-mono">+{task.powerEarned || 0}</span>
+                        {task.durationMinutes !== null && task.durationMinutes !== undefined && (
+                          <span className="text-[9px] px-1.5 py-0.5 border border-zinc-600 text-zinc-300 font-black tracking-wider font-mono">⏱ {formatDuration(task.durationMinutes)}</span>
+                        )}
+                        {task.comboAtCompletion >= 2 && (
+                          <span className="text-[9px] px-1.5 py-0.5 bg-zinc-800 text-white font-black tracking-wider uppercase">×{task.comboAtCompletion} STREAK</span>
+                        )}
+                        {task.scheduledBonus > 0 && (
+                          <span className="text-[9px] px-1.5 py-0.5 bg-cyan-700 text-white font-black tracking-wider uppercase">📅 +{task.scheduledBonus} 約束達成</span>
+                        )}
+                        {task.earlyBonus > 0 && (
+                          <span className="text-[9px] px-1.5 py-0.5 bg-yellow-500 text-black font-black tracking-wider uppercase">⚡ +{task.earlyBonus} 前倒し</span>
+                        )}
+                      </div>
+                    </div>
+                    {editing ? (
+                      <button onClick={saveEditDone} className="text-[10px] px-2 py-1 rounded bg-white text-black font-black flex-shrink-0">保存</button>
+                    ) : (
+                      <div className="flex flex-col gap-1 flex-shrink-0">
+                        <button onClick={() => { setEditingDoneId(task.id); setEditDoneText(task.text); }} className="text-[10px] px-2 py-1 rounded border border-zinc-700 text-zinc-400 hover:text-white hover:border-zinc-500">編集</button>
+                        <button onClick={() => uncompleteTask(task.id)} className="text-[10px] px-2 py-1 rounded border border-zinc-700 text-zinc-400 hover:text-cyan-300 hover:border-cyan-700">戻す</button>
+                        <button onClick={() => deleteCompletedTask(task.id)} className="text-[10px] px-2 py-1 rounded border border-zinc-700 text-zinc-400 hover:text-red-400 hover:border-red-700">削除</button>
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+          )}
         </div>
 
         {/* タスクタイマー進行中 */}
@@ -1622,167 +1808,6 @@ export default function SelfVsSelf() {
             </div>
           </div>
         )}
-
-        {/* タスクリスト */}
-        <div className="space-y-2">
-          {activeTasks.length === 0 && completedTasks.length === 0 && failedTasks.length === 0 && (
-            <div className="border border-dashed border-zinc-800 p-8 text-center">
-              <div className="text-zinc-600 text-[10px] tracking-[0.3em] uppercase font-black">No Tasks Queued</div>
-              <div className="text-zinc-700 text-[9px] tracking-wider uppercase mt-1">Define Your Mission</div>
-            </div>
-          )}
-          {/* 明日のタスク（予約） */}
-          {activeTasks.filter(t => t.forTomorrow).length > 0 && (
-            <div className="mb-2">
-              <div className="text-xs text-cyan-300 tracking-[0.2em] mb-2 font-black uppercase flex items-center gap-1.5 px-1">
-                <CalendarPlus className="w-3.5 h-3.5" />
-                明日やる予定 ({activeTasks.filter(t => t.forTomorrow).length}) 
-                <span className="text-yellow-400 text-[10px] ml-auto">⚡ 今やると+15ボーナス</span>
-              </div>
-              {activeTasks.filter(t => t.forTomorrow).map(task => {
-                const cat = getCategory(task.categoryId);
-                const diff = DIFFICULTIES[task.difficulty];
-                return (
-                  <div key={task.id} className="bg-gradient-to-br from-blue-900/40 to-cyan-900/30 border-2 border-blue-600/60 rounded-xl p-3 flex items-center gap-2 mb-2">
-                    <button onClick={() => completeTask(task.id)} className="w-9 h-9 rounded-lg border-2 border-cyan-500 hover:border-yellow-400 hover:bg-yellow-500/20 bg-blue-800/50 flex items-center justify-center transition active:scale-90 flex-shrink-0" title="今すぐ実行（前倒しボーナス+15）">
-                      <Check className="w-4 h-4 text-cyan-300" />
-                    </button>
-                    <div className="flex-1 min-w-0">
-                      <div className="font-bold text-cyan-50 break-words tracking-wide">{task.text}</div>
-                      <div className="flex flex-wrap gap-1 mt-1">
-                        <span className={`text-[9px] px-1.5 py-0.5 rounded bg-gradient-to-r ${cat.color} text-white font-bold`}>{cat.emoji} {cat.label}</span>
-                        <span className="text-[9px] px-1.5 py-0.5 rounded border border-cyan-600 text-cyan-200 font-black tracking-wider">明日: +{diff.power}</span>
-                        <span className="text-[9px] px-1.5 py-0.5 rounded bg-yellow-500 text-black font-black tracking-wider">⚡ 今やる +15</span>
-                      </div>
-                    </div>
-                    <button onClick={() => deleteTask(task.id)} className="p-1 text-cyan-700 hover:text-red-400 flex-shrink-0" title="削除">
-                      <Trash2 className="w-3.5 h-3.5" />
-                    </button>
-                  </div>
-                );
-              })}
-            </div>
-          )}
-
-          {activeTasks.filter(t => !t.forTomorrow).map(task => {
-            const cat = getCategory(task.categoryId);
-            const diff = DIFFICULTIES[task.difficulty];
-            const key = getTaskKey(task.text, task.categoryId);
-            const currentCombo = taskCombos[key]?.count || 0;
-            const yesterday = new Date(Date.now() - 86400000).toDateString();
-            const nextCombo = taskCombos[key]?.lastDate === yesterday ? currentCombo + 1 : (taskCombos[key]?.lastDate === getTodayStr() ? currentCombo : 1);
-            const bonus = getComboBonus(nextCombo);
-            const projectedPower = Math.round(diff.power * bonus.mult) + (task.scheduledFor === 'today' ? 10 : 0);
-            const isTiming = activeTaskTimer?.taskId === task.id;
-            const isScheduled = task.scheduledFor === 'today';
-            return (
-              <div key={task.id} className={`bg-zinc-950 border ${isTiming ? 'border-white' : isScheduled ? 'border-cyan-700' : 'border-zinc-800'} rounded-xl p-3 flex items-center gap-2`}>
-                <button onClick={() => completeTask(task.id)} disabled={isTiming} className="w-9 h-9 rounded-lg border-2 border-zinc-700 hover:border-white hover:bg-white/5 flex items-center justify-center transition active:scale-90 flex-shrink-0 disabled:opacity-30" title="完了">
-                  <Check className="w-4 h-4 text-zinc-600" />
-                </button>
-                <div className="flex-1 min-w-0">
-                  <div className="font-bold text-white break-words tracking-wide">{task.text}</div>
-                  <div className="flex flex-wrap gap-1 mt-1">
-                    {isScheduled && <span className="text-[9px] px-1.5 py-0.5 rounded bg-cyan-700 text-white font-black tracking-wider uppercase">📅 予約済み</span>}
-                    <span className={`text-[9px] px-1.5 py-0.5 rounded bg-gradient-to-r ${cat.color} text-white font-bold`}>{cat.emoji} {cat.label}</span>
-                    <span className="text-[9px] px-1.5 py-0.5 rounded border border-zinc-700 text-zinc-400 font-black tracking-wider">+{projectedPower}</span>
-                    {bonus.label && <span className="text-[9px] px-1.5 py-0.5 rounded bg-orange-900/40 border border-orange-700 text-orange-300 font-bold">{bonus.label} x{bonus.mult}</span>}
-                    {isScheduled && <span className="text-[9px] px-1.5 py-0.5 rounded bg-cyan-900/50 text-cyan-300 font-black tracking-wider">+10 実行</span>}
-                    {taskMaxDurations[key] > 0 && (
-                      <span className="text-[9px] px-1.5 py-0.5 rounded bg-purple-900/40 border border-purple-700 text-purple-300 font-bold">⏱️ ベスト{formatDuration(taskMaxDurations[key])} 超で +ボーナス</span>
-                    )}
-                  </div>
-                </div>
-                {!isTiming && !activeTaskTimer && (
-                  <button onClick={() => startTask(task.id)} className="w-9 h-9 rounded-lg border border-zinc-700 hover:border-white hover:bg-white/5 flex items-center justify-center transition active:scale-90 flex-shrink-0" title="タイマー開始">
-                    <Play className="w-3.5 h-3.5 text-white" />
-                  </button>
-                )}
-                <button onClick={() => failTask(task.id)} className="w-9 h-9 rounded-lg border border-zinc-800 hover:border-red-600 hover:bg-red-600/10 flex items-center justify-center transition active:scale-90 flex-shrink-0" title="敗北として記録">
-                  <XCircle className="w-3.5 h-3.5 text-zinc-600" />
-                </button>
-                <button onClick={() => deleteTask(task.id)} className="p-1 text-zinc-700 hover:text-zinc-400 flex-shrink-0" title="削除">
-                  <Trash2 className="w-3.5 h-3.5" />
-                </button>
-              </div>
-            );
-          })}
-
-          {failedTasks.length > 0 && (
-            <div className="pt-3 mt-3 border-t border-red-900/40">
-              <div className="text-[10px] text-red-500 tracking-[0.3em] mb-2 font-black uppercase">⚠ Defeated ({failedTasks.length})</div>
-              {failedTasks.map(task => {
-                const cat = getCategory(task.categoryId);
-                return (
-                  <div key={task.id} className="bg-zinc-950 border border-red-900/60 p-3 flex items-center gap-3 mb-2">
-                    <div className="w-9 h-9 border-2 border-red-700 flex items-center justify-center flex-shrink-0">
-                      <XCircle className="w-4 h-4 text-red-500" />
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <div className="font-bold text-zinc-400 break-words tracking-wide">{task.text}</div>
-                      <div className="flex gap-1 mt-1">
-                        <span className="text-[9px] px-1.5 py-0.5 bg-zinc-800 text-zinc-500 tracking-wider uppercase">{cat.label}</span>
-                        <span className="text-[9px] px-1.5 py-0.5 bg-red-900/40 text-red-400 font-black tracking-wider uppercase">Defeat</span>
-                      </div>
-                    </div>
-                    <button onClick={() => deleteTask(task.id)} className="p-2 text-zinc-700 hover:text-red-500 flex-shrink-0">
-                      <Trash2 className="w-4 h-4" />
-                    </button>
-                  </div>
-                );
-              })}
-            </div>
-          )}
-
-          {completedTasks.length > 0 && (
-            <div className="pt-3 mt-3 border-t border-zinc-800">
-              <div className="text-[10px] text-zinc-500 tracking-[0.3em] mb-2 font-black uppercase">⬢ Completed ({completedTasks.length})</div>
-              {completedTasks.map(task => {
-                const cat = getCategory(task.categoryId);
-                const editing = editingDoneId === task.id;
-                return (
-                  <div key={task.id} className="bg-zinc-950 border border-zinc-800/60 p-3 flex items-center gap-2 mb-2">
-                    <div className="w-9 h-9 border-2 border-white flex items-center justify-center flex-shrink-0">
-                      <Check className="w-4 h-4 text-white" />
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      {editing ? (
-                        <input type="text" value={editDoneText} onChange={(e) => setEditDoneText(e.target.value)} onKeyDown={(e) => e.key === 'Enter' && saveEditDone()} autoFocus className="w-full bg-black border border-zinc-600 rounded px-2 py-1 text-white text-sm focus:border-white focus:outline-none" />
-                      ) : (
-                        <div className="font-bold line-through text-zinc-500 break-words tracking-wide">{task.text}</div>
-                      )}
-                      <div className="flex flex-wrap gap-1 mt-1">
-                        <span className="text-[9px] px-1.5 py-0.5 bg-zinc-800 text-zinc-400 tracking-wider uppercase">{cat.label}</span>
-                        <span className="text-[9px] px-1.5 py-0.5 bg-white text-black font-black tracking-wider font-mono">+{task.powerEarned || 0}</span>
-                        {task.durationMinutes !== null && task.durationMinutes !== undefined && (
-                          <span className="text-[9px] px-1.5 py-0.5 border border-zinc-600 text-zinc-300 font-black tracking-wider font-mono">⏱ {formatDuration(task.durationMinutes)}</span>
-                        )}
-                        {task.comboAtCompletion >= 2 && (
-                          <span className="text-[9px] px-1.5 py-0.5 bg-zinc-800 text-white font-black tracking-wider uppercase">×{task.comboAtCompletion} STREAK</span>
-                        )}
-                        {task.scheduledBonus > 0 && (
-                          <span className="text-[9px] px-1.5 py-0.5 bg-cyan-700 text-white font-black tracking-wider uppercase">📅 +{task.scheduledBonus} 約束達成</span>
-                        )}
-                        {task.earlyBonus > 0 && (
-                          <span className="text-[9px] px-1.5 py-0.5 bg-yellow-500 text-black font-black tracking-wider uppercase">⚡ +{task.earlyBonus} 前倒し</span>
-                        )}
-                      </div>
-                    </div>
-                    {editing ? (
-                      <button onClick={saveEditDone} className="text-[10px] px-2 py-1 rounded bg-white text-black font-black flex-shrink-0">保存</button>
-                    ) : (
-                      <div className="flex flex-col gap-1 flex-shrink-0">
-                        <button onClick={() => { setEditingDoneId(task.id); setEditDoneText(task.text); }} className="text-[10px] px-2 py-1 rounded border border-zinc-700 text-zinc-400 hover:text-white hover:border-zinc-500">編集</button>
-                        <button onClick={() => uncompleteTask(task.id)} className="text-[10px] px-2 py-1 rounded border border-zinc-700 text-zinc-400 hover:text-cyan-300 hover:border-cyan-700">戻す</button>
-                        <button onClick={() => deleteCompletedTask(task.id)} className="text-[10px] px-2 py-1 rounded border border-zinc-700 text-zinc-400 hover:text-red-400 hover:border-red-700">削除</button>
-                      </div>
-                    )}
-                  </div>
-                );
-              })}
-            </div>
-          )}
-        </div>
 
         <div className="mt-8 text-center"><div className="text-zinc-700 text-xs tracking-[0.3em]">KEEP GOING</div></div>
       </div>
