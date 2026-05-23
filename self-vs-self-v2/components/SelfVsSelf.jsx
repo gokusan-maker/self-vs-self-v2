@@ -144,271 +144,245 @@ const getTaskKey = (text, categoryId) => `${categoryId}::${text.trim().toLowerCa
 // 厳しいコーチのセリフ
 const QUOTES = {
   idle: [
-    'KEEP GOING. それしかねえだろ。',
-    'NO EXCUSES. 言い訳考える時間で1個やれ。',
-    'MOVE NOW. 快適さはお前を鈍らせる。',
-    'WAR STARTS HERE. 今日も戦いだ。',
-    'NO ONE\'S COMING. 自分でやれ。',
-    'EMBRACE THE PAIN. 痛みは友達だ。',
-    'BREAK THE LIMIT. 限界を決めてるのはお前自身だ。',
-    'SHUT UP AND MOVE. 頭の声を黙らせろ。',
-    'BEAT YESTERDAY\'S YOU. 昨日の自分を超えろ。',
-    'NEVER QUIT. これだけ覚えとけ。',
-    'DISCIPLINE OVER MOTIVATION. やる気は嘘。規律だけが本物。',
-    'GO HARDER. お前はまだ本気を出してない。',
-    'NO MERCY. 自分の弱さに容赦するな。',
-    'HARDEN UP. 立て。今すぐだ。',
-    'COMFORT TRAPS YOU. 快適なベッドは甘い罠だ。',
-    'EVERY DAY COUNTS. 今日サボったら明日のお前が今日を恨むぞ。',
-    'NO WITNESS, NO MATTER. 誰も見てない時に何をするかが全てだ。',
-    'FORGE YOUR MIND. 心を鋼にしろ。',
-    'CHASE THE PAIN. 痛みから逃げるな。探しに行け。',
-    'EAT THE FROG. 一日一回、嫌なことをやれ。',
-    'YOUR MIRROR IS YOUR ENEMY. お前は鏡の中の敵と戦ってる。',
-    'BEST EFFORT. 最高じゃなくていい。最善を尽くせ。',
-    'FUCK YOUR FEELINGS. 気分なんか関係ねえ。やれ。',
-    'BEAT THE WEAK YOU. 弱い自分を毎日少しずつ超えろ。',
-    'YOU ARE ON YOUR OWN. 誰もお前を救わない。',
-    'OWN IT. お前の人生はお前の責任だ。',
-    'ONE MORE STEP. 小さい一歩でいい。だが止まるな。',
-    'DO THE HARD THING. 嫌なことをやれ。それが成長だ。',
-    'KEEP GOING. これは挨拶じゃない。命令だ。',
-    'SWEAT. PUSH. RISE. 汗かいて、踏ん張って、立ち上がれ。',
-    'THE WORLD WON\'T WAIT. 世界はお前を待たない。',
-    '99% DON\'T DO THIS. 誰もやらないことをやれ。',
-    'PROVE YOURSELF. 自分に証明しろ。',
-    'CRUSH IT TODAY. 今日も潰せ。',
-    'WAKE THE BEAST. お前の中の獣を起こせ。',
-    'MIND OVER BODY. 体じゃない。心が全てだ。',
-    'NO RETREAT. 後退はない。前か立ち止まるかだ。',
-    'BE UNCOMFORTABLE. 居心地悪い場所に行け。',
-    'WAR EVERY DAY. 毎日が戦いだ。',
-    'STOP SCROLLING. その指で人生は変わらねえ。',
-    'EXCUSES ARE LIES. 言い訳はお前がお前につく嘘だ。',
-    'ACTION KILLS FEAR. 動け。恐怖は止まったやつに巣食う。',
-    'YOU PROMISED. 昨日の自分との約束を破る気か。',
-    'SMALL WINS STACK. 小さく勝て。積み上げろ。',
-    'NOBODY CARES. 同情を待つな。結果を出せ。',
-    'TIME IS BLEEDING. 迷ってる今も時間は減ってる。',
-    'BORING WINS. 地味な努力だけが本物だ。',
-    'GET UP. 倒れたなら立て。それだけだ。',
-    'FUTURE YOU IS WATCHING. 一年後のお前が今を見てる。',
-    'KILL \'LATER\'. 「明日から」を今すぐ殺せ。',
-    'PAIN IS TUITION. 痛みは成長の授業料だ。',
-    'BE THE EXCEPTION. みんなと同じなら結果も同じだ。',
-    'NO HALF MEASURES. 中途半端はやらないより悪い。',
-    'SUCK IT UP. 文句を言う暇で1個終わらせろ。',
-    'CONSISTENCY IS KING. 才能より継続が勝つ。',
-    'WORK IN SILENCE. 黙ってやれ。語るのは結果だけだ。',
-    'YESTERDAY IS DEAD. 過去は終わった。今をやれ。',
-    'EARN YOUR REST. 休む資格は働いた者だけにある。',
-    'DISCOMFORT IS GROWTH. 楽な道に成長はねえ。',
-    'STARE IT DOWN. 逃げてる課題を今すぐ見ろ。',
-    'MOTION OVER MOOD. 気分が乗らなくても体を動かせ。',
-    'BUILD THE HABIT. 一回じゃ意味ねえ。毎日やれ。',
-    'CHOOSE HARD. 楽と成長、お前はどっちを選ぶ。',
-    'NO ZERO DAYS. 何もしない日を作るな。',
-    'DELETE THE NOISE. 言い訳も雑念も全部消せ。',
-    'YOU VS YOU. 敵は他人じゃない。昨日のお前だ。',
-    'FINISH IT. 始めたなら終わらせろ。',
-    'STAND TALL. 背筋を伸ばせ。今日を支配しろ。',
-    'STAY HUNGRY. 満足した瞬間に成長は止まる。',
-    'GRIND NOW. 楽しむのは結果を出してからだ。',
-    'BREAK THE LOOP. ダラダラの輪を今ここで断て。',
-    'SHOW UP. 才能より、現れることだ。',
-    'NO SAVIOR. ヒーローは来ない。お前がやれ。',
-    'TODAY DECIDES. 今日の選択が未来を作る。',
-    'DON\'T NEGOTIATE. 自分と交渉するな。ただやれ。',
-    'ATTACK THE DAY. 一日を受け身で過ごすな。',
+    'START NOW. 今動け。お前なら必ずできる。',
+    'NO EXCUSES. 言い訳の数だけ可能性を捨ててる。やれ。',
+    'YOU GOT THIS. 楽じゃない。でもお前なら越えられる。',
+    'FACE IT. 逃げてる課題、今日こそ正面から見ろ。',
+    'ONE STEP. 完璧じゃなくていい。一歩でいい。踏み出せ。',
+    'TIME IS REAL. 迷ってる今も時間は減ってる。だから今だ。',
+    'BEAT YESTERDAY. 昨日の自分を超えろ。お前にはできる。',
+    'DISCIPLINE WINS. やる気は消える。規律が残る。積み上げろ。',
+    'HARD IS THE WAY. 楽な道に成長はない。きつい方を選べ。',
+    'RISE NOW. 倒れたか。なら立て。何度でも立てる男だろ。',
+    'OWN YOUR DAY. 今日はお前のものだ。受け身で終わらせるな。',
+    'PROVE IT. 誰にでもない、自分に証明しろ。やれる男だと。',
+    'NO ZERO DAYS. 何もしない日は作るな。小さくても動け。',
+    'STOP SCROLLING. その指で人生は変わらない。顔を上げろ。',
+    'REALITY CHECK. 動かなければ何も変わらない。だから動け。',
+    'YOU PROMISED. 昨日の自分との約束だ。守れる男だろ。',
+    'KILL LATER. 「明日から」を今すぐ終わらせろ。今ならできる。',
+    'SMALL WINS STACK. 小さく勝て。それを積めばお前は変わる。',
+    'MOTION OVER MOOD. 気分は当てにするな。体を先に動かせ。',
+    'FINISH WHAT YOU START. 始めたなら終わらせろ。やれる。',
+    'THE WORK IS QUIET. 地味な努力こそ本物だ。黙って続けろ。',
+    'CHOOSE GROWTH. 楽と成長、お前はもう答えを知ってる。',
+    'FEAR FADES WITH ACTION. 動けば恐怖は消える。まず一歩だ。',
+    'STAY HUNGRY. 満足するな。お前の伸びしろはまだある。',
+    'TODAY DECIDES. 今日の選択が一年後のお前を作る。',
+    'NO ONE SAVES YOU. 助けは来ない。でもお前は自分を救える。',
+    'GET UNCOMFORTABLE. 居心地の悪さは成長のサインだ。進め。',
+    'BREAK THE LOOP. ダラダラの輪を今ここで断て。できる。',
+    'SHOW UP. 才能より、現れることだ。今日も現れろ。',
+    'NO NEGOTIATION. 自分と交渉するな。決めたならやれ。',
+    'YOU VS YOU. 敵は他人じゃない。昨日のお前だ。今日勝て。',
+    'EAT THE FROG. 一番嫌なことを最初にやれ。お前なら片付く。',
+    'CONSISTENCY IS KING. 才能より継続。続けられる男になれ。',
+    'BUILD THE HABIT. 一回じゃ変わらない。毎日だ。続けろ。',
+    'FUTURE YOU IS WATCHING. 一年後のお前が今を見てる。応えろ。',
+    'PAIN IS TUITION. きつさは成長の授業料だ。払う価値がある。',
+    'ATTACK THE DAY. 一日を待つな。お前から仕掛けろ。',
+    'STAND TALL. 背筋を伸ばせ。今日を支配する顔をしろ。',
+    'EARN YOUR REST. 休みは働いた者の権利だ。まず働け。',
+    'DELETE THE NOISE. 言い訳も雑念も消せ。やることは一つだ。',
+    'YOU ARE CAPABLE. お前には力がある。あとは使うだけだ。',
+    'MOVE BEFORE YOU THINK. 考える前に動け。考えは逃げ道を作る。',
+    'HARD THING FIRST. きついことから手をつけろ。後が楽になる。',
+    'READY NEVER COMES. 準備が整う日は来ない。今のお前でやれ。',
+    'PROGRESS, NOT PERFECTION. 完璧を待つな。前進しろ。',
+    'KEEP THE PROMISE. 自分への約束を守れ。それが信用の土台だ。',
+    'ONE MORE REP. もう一回。その一回がお前を変える。',
+    'BE THE EXCEPTION. みんなと同じなら結果も同じだ。抜け出せ。',
+    'SILENCE THE DOUBT. 迷いは黙らせろ。お前は動ける男だ。',
+    'WIN THE MORNING. 朝を制すれば一日を制す。今すぐ動け。',
   ],
   taskAdded: [
-    'LIST IS NOTHING. 書いただけじゃ意味ねえ。',
-    'NOW EXECUTE. 書いた。次は？やれ。',
-    'PLANNERS LOSE. 計画立てるだけのやつは負ける。',
-    'STEP IN THE RING. 戦場に上がった。逃げるな。',
-    'PAPER IS CHEAP. 紙の上の決意に価値はねえ。実行しろ。',
-    'CLOCK STARTED. 書いた瞬間からタイマーは動いてる。',
+    'LIST IS A START. 書いたな。だが書いただけだ。次は実行だ。',
+    'NOW EXECUTE. 計画はできた。お前ならやり切れる。動け。',
+    'PAPER MEANS NOTHING. 紙の決意に価値はない。行動が証明する。',
+    'CLOCK STARTED. 書いた瞬間から時計は動いてる。始めろ。',
+    'COMMIT TO IT. 決めたなら逃げるな。お前ならできる。',
+    'STEP IN. 戦場に上がった。あとは戦うだけだ。',
   ],
   taskStart: [
-    'EXECUTE. 始めたな。途中でやめるな。',
-    'LOCK IN. 集中しろ。',
-    'CLOCK IS RUNNING. 時計は動いてる。長くやれ。',
-    'NOW IS EVERYTHING. 今この瞬間が全てだ。',
-    'NO PHONE. 手を止めるな。気を散らすな。',
-    'DIVE DEEP. 浅くやるな。底まで潜れ。',
+    'LOCKED IN. 始めたな。最後までやり切れる男だ。',
+    'STAY FOCUSED. 集中しろ。今この瞬間にすべてを置け。',
+    'NO DISTRACTIONS. 手を止めるな。気を散らすな。やれる。',
+    'DIVE DEEP. 浅くやるな。底まで潜れ。深さが差を生む。',
+    'THE CLOCK IS YOURS. 時間は味方だ。長く積め。',
+    'PROVE IT NOW. 始めた。あとは実行で証明しろ。',
   ],
   smallWin: [
-    'NOT ENOUGH. まだ甘い。続けろ。',
-    'NEXT STEP. 一歩。次の一歩。',
-    'DON\'T SETTLE. これで満足するな。',
-    'WARM UP. ウォームアップだ。',
-    'KEEP STACKING. 一個じゃ足りねえ。積め。',
-    'MORE. これは最低ラインだ。',
+    'GOOD START. 一歩踏み出した。その調子だ、続けろ。',
+    'KEEP STACKING. 一個でいい。だが止まるな。積み上げろ。',
+    'MOMENTUM BUILDS. 流れはここから。次の一歩へ。',
+    'THIS IS THE BASE. これが土台だ。お前ならもっと積める。',
+    'NOT DONE YET. まだ序盤だ。お前の本気はこれからだ。',
+    'ONE DOWN. 一個片付けた。次へ行こう、できるはずだ。',
   ],
   mediumWin: [
-    'GOOD. NOT ENOUGH. いいぞ。だがまだ足りない。',
-    'THE DEMON\'S SHAKING. お前の中の悪魔が震えてる。',
-    'KEEP MOVING. 止まったら負けだ。',
-    'HALFWAY. まだ半分だ。気を抜くな。',
-    'PUSH MORE. ここで止めるな。もう一段上げろ。',
-    'STEADY. 着実だ。だが満足はするな。',
+    'SOLID WORK. いい仕事だ。だがお前はもっとやれる。',
+    'HALFWAY THERE. 半分来た。ここからが本番だ、続けろ。',
+    'KEEP PUSHING. 止まるな。お前の足はまだ動く。',
+    'STEADY PROGRESS. 着実だ。この積み重ねが必ず効く。',
+    'YOU ARE BUILDING. 一段ずつ上げてる。その調子だ。',
+    'RAISE IT. ここでもう一段上げろ。お前ならいける。',
   ],
   bigWin: [
-    'THAT\'S IT! 毎日それをやれ！',
-    'COMFORT ZONE DESTROYED. 快適ゾーン破壊した。',
-    'GO HARDER! まだいけるだろ！',
-    'YOU CHANGED TODAY. お前は今日、自分を変えた。',
-    'RESPECT. 今日のお前は本物だ。',
-    'NOW REPEAT IT. 一回で満足するな。明日もだ。',
+    'THIS IS THE STANDARD. これがお前の基準だ。明日も出せ。',
+    'YOU CHANGED TODAY. 今日、お前は自分を変えた。誇れ。',
+    'REAL PROGRESS. これは本物だ。お前の力を見たぞ。',
+    'NOW REPEAT IT. 一回で満足するな。明日も同じ強さでいけ。',
+    'IMPRESSIVE. 今日のお前は本物だ。この感覚を覚えとけ。',
+    'COMFORT ZONE BROKEN. 快適圏を破った。まだ伸びる。',
   ],
   longSession: [
-    'DEEP WORK. 長くやったな。それが本物だ。',
-    'PROOF OF FOCUS. 集中の証明だ。',
-    'TIME INVESTED. 時間をかけた。それが結果になる。',
-    'THIS MAKES THE DIFFERENCE. 深く潜った。それが差を生む。',
-    'ENDURANCE. 続けられる者だけが勝つ。',
-    'BUILT DIFFERENT. 長時間こなせる心を作ったな。',
+    'DEEP WORK. 長く潜ったな。それができる男だ。',
+    'PROOF OF FOCUS. 集中を続けた証明だ。お前は本物だ。',
+    'ENDURANCE WINS. 続けられる者が勝つ。お前はその一人だ。',
+    'TIME WELL SPENT. かけた時間は必ず結果になる。',
+    'BUILT DIFFERENT. 長丁場をこなす心を作ったな。',
+    'THIS IS THE EDGE. この粘りが差になる。続けろ。',
   ],
   beatYesterday: [
-    'YESTERDAY YOU WAS WEAK. 昨日のお前は弱かった。今日は強い。',
-    'PAST DEFEATED. 過去の自分を倒した。明日はもっと強くなれ。',
-    'WIN. DON\'T SETTLE. 勝った。だが満足するな。',
-    'BEAT THE OLD YOU. これを毎日続けろ。',
-    'PROGRESS. 昨日を超えた。それが唯一の指標だ。',
-    'ONE UP. 昨日に勝った。次は今日のお前と戦え。',
+    'YOU BEAT YESTERDAY. 昨日の自分を超えた。それが成長だ。',
+    'PROGRESS PROVEN. 前進した。お前は伸びてる、間違いない。',
+    'WIN, DO NOT SETTLE. 勝った。だが満足するな。明日も超えろ。',
+    'ONE UP. 昨日に勝った。次は今日のお前が相手だ。',
+    'THE GAP GROWS. 過去との差が開いてる。お前は変わってる。',
+    'KEEP CLIMBING. 昨日を超えた。その登りを止めるな。',
   ],
   newBest: [
-    'NEW RECORD! 限界を上書きした！',
-    'NEW BASELINE. これが新しい最低ラインだ。',
-    'YOU ARE NEW. お前は今、別人になった。',
-    'CEILING BROKEN. 天井をぶち破ったな。',
-    'PROVE IT AGAIN. 一度の最高は偶然だ。もう一度出せ。',
+    'NEW RECORD. 自己ベスト更新だ。お前の限界が上がった。',
+    'NEW BASELINE. これが新しい基準だ。ここから始めろ。',
+    'YOU LEVELED UP. お前は一段上がった。誇っていい。',
+    'CEILING BROKEN. 天井を破った。お前にはまだ先がある。',
+    'PROVE IT AGAIN. 一度の最高で終わるな。もう一度出せる。',
   ],
   combo: [
-    'CONSISTENCY WINS. 継続だ。それが本物の強さだ。',
-    'REPEAT IT. 同じことを繰り返せ。それが規律だ。',
-    'EVERY DAY. 昨日もやった。今日もやった。明日もやれ。',
-    'YOU\'RE BECOMING SOMEONE ELSE. お前は別人になりつつある。',
-    'DON\'T BREAK IT. その鎖を切らすな。',
-    'MOMENTUM. 流れができた。止めるな。',
+    'CONSISTENCY WINS. 続けてる。それが本物の強さだ。',
+    'KEEP THE CHAIN. その連続を切らすな。お前ならできる。',
+    'EVERY DAY COUNTS. 昨日も今日もやった。明日もだ。',
+    'YOU ARE BECOMING SOMEONE. お前は変わりつつある。続けろ。',
+    'MOMENTUM IS REAL. 流れができた。乗り続けろ。',
+    'DISCIPLINE SHOWS. 継続できてる。それがお前の証明だ。',
   ],
   bigCombo: [
-    'YOU ARE DIFFERENT NOW. お前は別格になった。',
-    'NO ONE CAN COPY THIS. 誰にも真似できない。',
-    'LEGEND TERRITORY. 伝説の領域だ。止まるな。',
-    'FORGED IN STEEL. 鋼の習慣ができたな。',
-    'DON\'T GET SOFT. ここまで来て緩むな。',
+    'YOU ARE DIFFERENT NOW. お前は別格になった。止まるな。',
+    'RARE TERRITORY. ここまで続く者は少ない。お前はやってる。',
+    'FORGED IN STEEL. 鋼の習慣ができた。これがお前の土台だ。',
+    'STAY HARD. ここまで来た。最後まで緩めるな。',
+    'LEGEND MODE. 伝説の領域だ。お前ならまだ伸ばせる。',
   ],
   failed: [
-    'YOU RAN. 逃げたな。次は逃げるな。',
-    'AT LEAST YOU FACED IT. 負けを認めるだけマシだ。',
-    'THE DEMON\'S LAUGHING. お前の中の悪魔が笑ってる。',
-    'NO HIDING. 失敗を隠すな。それが弱さの始まりだ。',
-    'LOST TODAY. WIN TOMORROW. 明日は同じ場所で勝て。',
-    'REMEMBER THIS. この悔しさを忘れるな。',
-    'GET BACK UP. 倒れた。で？立て。',
+    'YOU FELL. SO RISE. 倒れた。だが終わりじゃない。立て。',
+    'FACE IT HONESTLY. 負けは認めろ。認めた者だけが次に勝てる。',
+    'TOMORROW, WIN HERE. 明日、同じ場所で勝て。お前ならできる。',
+    'REMEMBER THIS. この悔しさを忘れるな。力に変えろ。',
+    'ONE LOSS IS NOT YOU. 一度の負けがお前のすべてじゃない。',
+    'GET BACK UP. 倒れた。で？立て。お前は立てる男だ。',
+    'LEARN AND MOVE. 原因を見ろ。直せ。お前なら立て直せる。',
   ],
   wakeUp: [
-    'HARDEN UP! 起きたな。次は何をやる？',
-    'FIRST WIN. ベッドを離れた。最初の戦いに勝った。',
-    'MOVE. DON\'T THINK. 起きた。動け。考えるな。',
-    'ESCAPE THE TRAP. 布団は甘い罠だ。脱出したな。',
-    'DAY STARTS NOW. 起きた瞬間から勝負だ。',
-    'NO SNOOZE. 二度寝の誘惑に勝ったな。',
+    'FIRST WIN. ベッドを出た。今日最初の勝利だ。',
+    'MOVE, DO NOT THINK. 起きた。考える前に動け。',
+    'DAY STARTS NOW. 起きた瞬間から勝負だ。お前ならやれる。',
+    'YOU ESCAPED THE TRAP. 布団の罠を抜けた。いい入りだ。',
+    'NOW BUILD ON IT. 起きたな。この勢いで一日を作れ。',
+    'NO SNOOZE. 二度寝に勝った。その判断力で一日いけ。',
   ],
   wakeUpEarly: [
-    'WINNER\'S HOUR. これが勝者の起床時間だ！',
-    '99% ARE STILL SLEEPING. お前は別格だ。',
-    'BEFORE THE SUN. 太陽より先に起きた。',
-    'NO ONE\'S HERE. 誰も入れない領域。',
-    'STOLEN TIME. 他人より数時間多く生きてる。',
+    'WINNER HOUR. これが勝者の時間だ。お前は掴んだ。',
+    'AHEAD OF THE WORLD. 世界より先に動いた。差を作ったな。',
+    'BEFORE THE SUN. 太陽より早く起きた。本物の規律だ。',
+    'STOLEN TIME. 他人より長く生きてる。使い切れ。',
+    'STRONG START. 最高の入りだ。この一日、お前のものだ。',
   ],
   wakeUpLate: [
-    'HALF DAY GONE. 半日無駄にした。',
-    'OVERSLEPT. 認めろ。明日は早く起きろ。',
-    'BED WON. 次は勝て。',
-    'CATCH UP NOW. 出遅れた。なら今から倍動け。',
-    'NO MORE. この遅れを今日で終わらせろ。',
+    'LATE, BUT NOT LOST. 出遅れた。だが今からでも取り返せる。',
+    'OWN IT. 寝坊は認めろ。明日は早く起きられる男だ。',
+    'CATCH UP NOW. 遅れた分、今から動け。お前なら詰められる。',
+    'RESET TODAY. 朝はずれた。だが一日はまだ長い。立て直せ。',
+    'TOMORROW, EARLIER. 次は早く起きろ。お前にはできる。',
   ],
   sleep: [
-    'BATTLE DONE. 一日を戦い切ったか。明日はもっと戦え。',
-    'REST. DON\'T QUIT. 寝ろ。ただし負けたまま寝るな。',
-    'RECOVERY IS A WEAPON. 回復は弱さじゃない。武器だ。',
-    'REVIEW IT. 今日の戦いを振り返って寝ろ。',
-    'RECHARGE. 明日もう一度戦うために休め。',
+    'BATTLE DONE. 一日を戦い切ったな。ゆっくり休め。',
+    'REST IS A WEAPON. 回復は弱さじゃない。明日のための武器だ。',
+    'REVIEW AND REST. 今日を振り返って、それから寝ろ。',
+    'RECHARGE. 明日もう一度戦うために、しっかり休め。',
+    'WELL FOUGHT. よくやった。明日のお前にバトンを渡せ。',
   ],
   sleepEarly: [
-    'PRO RHYTHM. 早寝、早起き。プロのリズムだ。',
-    'DISCIPLINE. 早く寝るやつは強い。',
-    'PHONE DOWN. それが勝者の選択だ。',
-    'SMART MOVE. 明日の自分に投資したな。',
-    'WELL EARNED. 早く休む。それも規律だ。',
+    'PRO RHYTHM. 早寝早起き。プロのリズムを掴んでる。',
+    'SMART MOVE. 明日の自分に投資したな。賢い判断だ。',
+    'DISCIPLINE. 早く休むのも規律だ。お前はできてる。',
+    'PHONE DOWN. 画面を閉じた。それが勝者の選択だ。',
+    'WELL EARNED. 働いた者の休息だ。胸を張って寝ろ。',
   ],
   sleepLate: [
-    'YOU\'RE HURTING TOMORROW. 明日の自分の足を引っ張る気か。',
-    'GO TO SLEEP. こんな時間まで何してた。',
-    'NIGHT OWL = WEAK. 夜更かしは弱さの証明だ。',
-    'FIX IT. このリズムを明日断ち切れ。',
-    'PHONE DOWN NOW. 今すぐ画面を閉じて寝ろ。',
+    'LATE NIGHT. 遅いな。明日のお前のために、今すぐ寝ろ。',
+    'FIX THE RHYTHM. リズムが乱れてる。明日こそ整えられる。',
+    'PHONE DOWN NOW. 画面を閉じろ。その判断はお前にできる。',
+    'TOMORROW NEEDS YOU. 明日の自分のために休め。',
+    'RESET TONIGHT. 今夜から立て直せ。お前ならできる。',
   ],
   badStart: [
-    'KEEP IT SHORT. 短く終わらせろ。',
-    'CLOCK IS YOUR ENEMY. 長引くほどダメージだ。',
-    'STOP IN 5. 5分以内に止めろ。',
-    'CUT IT OFF. 早く止めろ。',
-    'YOU KNOW BETTER. これが何か、お前は分かってる。',
-    'TIMER ON. 時間を決めた。守れ。',
+    'KEEP IT SHORT. 短く終わらせろ。お前ならコントロールできる。',
+    'TIMER ON. 時間を決めた。守れる男だろ。',
+    'STOP IN 5. 5分で切れ。それができればお前の勝ちだ。',
+    'YOU KNOW BETTER. これが何か分かってる。長引かせるな。',
+    'CONTROL IT. 主導権はお前にある。早めに切れ。',
+    'SHORT AND DONE. さっと済ませて戻れ。お前ならできる。',
   ],
   badShort: [
-    'SHORT BURST. 短く終わらせた。だが繰り返すな。',
-    'THAT\'S OK. 一瞬で済んだ。それが正解だ。',
-    'UNDER CONTROL. 許容範囲だ。だが油断するな。',
-    'GOOD STOP. よく止めた。次もそうしろ。',
-    'BACK TO WORK. 終わったな。さっさと戻れ。',
+    'GOOD STOP. よく止めた。その自制が本物の強さだ。',
+    'UNDER CONTROL. 許容範囲だ。コントロールできてる。',
+    'BACK TO WORK. 短く終えたな。さあ戻ろう。',
+    'THAT IS DISCIPLINE. 一瞬で切り上げた。お前はやれてる。',
+    'WELL HANDLED. うまく抑えた。次もその調子だ。',
   ],
   badMedium: [
-    'TOO LONG. 次はもっと短くしろ。',
-    'YOU LOST A TASK. その時間でタスク1個できたぞ。',
-    'TIME THIEF. 時間泥棒だ。気づけ。',
-    'NOTICE THIS. ズルズルいった。原因を潰せ。',
-    'NEXT TIME, CUT EARLY. 次は早めに切れ。',
+    'A BIT LONG. 少し長かった。次はもっと早く切れる。',
+    'NOTICE THE PATTERN. ズルズルの原因を見ろ。直せるはずだ。',
+    'TIME MATTERS. その時間でタスク一個できた。次は活かせ。',
+    'CUT EARLIER NEXT TIME. 次は早めに切れ。お前ならできる。',
+    'LEARN FROM IT. 長引いた。だが気づけば次は変えられる。',
   ],
   badLong: [
-    'YOU JUST LOST TO YOURSELF. 自分に負けた。',
-    'HOURS GONE. それがお前の人生か？',
-    'BIG LOSS. 大きな痛手だ。明日取り返せ。',
-    'WEAKNESS WON. 記録して次は勝て。',
-    'FEEL IT. この時間の重さを忘れるな。',
-    'TOMORROW, FIGHT BACK. 明日この分を取り返せ。',
+    'THAT WAS COSTLY. 大きな時間を失った。だが取り返せる。',
+    'FEEL THE WEIGHT. この時間の重さを忘れるな。次の力にしろ。',
+    'TOMORROW, FIGHT BACK. 明日この分を取り返せ。お前ならやれる。',
+    'BE HONEST. 長すぎた。認めろ。認めれば次は変えられる。',
+    'ONE SLIP, NOT THE END. 一度の崩れで終わりじゃない。立て直せ。',
+    'RECLAIM IT. 失った時間は明日の行動で取り返せ。',
   ],
   recovery: [
-    'YOU GOT BACK UP. それが強さだ。',
-    'FALL. RISE. それが本物だ。',
-    'CAUGHT UP. だが油断するな。',
-    'RECOVERY MODE. 負けっぱなしじゃ終わらない。',
-    'NEVER QUIT. 弱さに屈しなかった。',
-    'STILL IN IT. まだ終わってない。続けろ。',
+    'YOU GOT BACK UP. 立ち直ったな。それがお前の強さだ。',
+    'FALL, THEN RISE. 倒れて立つ。それを繰り返せる男だ。',
+    'BACK IN THE FIGHT. まだ終わってない。お前は戻ってきた。',
+    'NEVER QUIT. 弱さに屈しなかった。その粘りが本物だ。',
+    'CAUGHT UP. 追いついた。だが気を抜くな、まだいける。',
+    'STILL STANDING. まだ立ってる。なら勝ち目はある。',
   ],
   scheduled: [
-    'PLAN AHEAD. 計画した。あとは実行だけだ。',
-    'TOMORROW IS YOURS. 明日の自分にバトンを渡したな。',
-    'COMMIT. 約束した。逃げるな。',
-    'STRATEGIC MOVE. 賢い動きだ。だが実行が全てだ。',
-    'NOW HONOR IT. 立てた予定は必ず実行しろ。',
+    'PLAN SET. 計画した。あとは実行だ。お前ならやり切れる。',
+    'COMMIT TO IT. 約束したな。逃げずに守れる男だ。',
+    'TOMORROW IS YOURS. 明日の自分にバトンを渡した。応えろ。',
+    'SMART MOVE. 先を見て動いた。だが実行こそが全てだ。',
+    'HONOR THE PLAN. 立てた予定は必ず実行しろ。できるはずだ。',
   ],
   scheduledDone: [
-    'PROMISE KEPT. 約束を守った。それが本物だ。',
-    'YOU SHOWED UP. 昨日の自分に裏切らなかった。',
-    'EXECUTED THE PLAN. 計画通り実行した。完璧だ。',
-    'CONSISTENCY PAYS. 言ったことをやった。それが信用だ。',
-    'RELIABLE. 計画を守れる男だな。',
+    'PROMISE KEPT. 約束を守った。それがお前の信用になる。',
+    'YOU SHOWED UP. 昨日の自分を裏切らなかった。立派だ。',
+    'EXECUTED THE PLAN. 計画通りやり切った。本物の規律だ。',
+    'RELIABLE. 言ったことをやる男だ。それが強さだ。',
+    'CONSISTENCY PAYS. 守り続けろ。それがお前を作る。',
   ],
   earlyExecution: [
-    'AHEAD OF SCHEDULE! 明日の自分に贈り物だ！',
-    'CRUSHED IT EARLY. 予定より早い。最強だ。',
-    'OVERACHIEVER. 言われる前にやった。それが超一流。',
+    'AHEAD OF SCHEDULE. 予定より早い。明日の自分への贈り物だ。',
+    'CRUSHED IT EARLY. 前倒しでやり切った。最高の動きだ。',
+    'OVERACHIEVER. 言われる前にやった。それが一流の証だ。',
     'FUTURE SELF WINS. 明日のお前が今日のお前に感謝してる。',
-    'DOMINATING. 計画を超えた。それが本物の規律だ。',
+    'REAL DISCIPLINE. 計画を超えた。お前はやれる男だ。',
   ],
 };
 
@@ -927,7 +901,12 @@ export default function SelfVsSelf() {
           } else {
             setCategories((d.categories || DEFAULT_CATEGORIES).map(c => (c.id === 'body' && c.label === '身体') ? { ...c, label: '健康' } : c));
             setBadCategories(withVideoCat(d.badCategories || DEFAULT_BAD_CATEGORIES));
-            setTasks((d.tasks || []).map(t => (t.partialDone && !t.partialDate && !t.completed && !t.failed) ? { ...t, partialDate: todayISO() } : t));
+            setTasks((d.tasks || []).map(t => {
+              let nt = t;
+              if (t.partialDone && !t.partialDate && !t.completed && !t.failed) nt = { ...nt, partialDate: todayISO() };
+              if ((t.planBonus || 0) > 0 && !t.planBonusDate) nt = { ...nt, planBonusDate: todayISO() };
+              return nt;
+            }));
             setTodayPower(d.todayPower || 0);
             setTotalPower(d.totalPower || 0);
             setBestDay(d.bestDay || { date: null, power: 0 });
@@ -1114,7 +1093,7 @@ export default function SelfVsSelf() {
         if (hp !== 0) evts.push({ label: '🔁 ' + t.text, points: hp });
         return;
       }
-      const p = (t.completed ? (t.powerEarned || 0) : 0) + (t.partialDate === todayISO() ? (t.partialPower || 0) : 0) + (t.planBonus || 0);
+      const p = (t.completed ? (t.powerEarned || 0) : 0) + (t.partialDate === todayISO() ? (t.partialPower || 0) : 0) + (t.planBonusDate === todayISO() ? (t.planBonus || 0) : 0);
       if (!t.completed && p === 0) return;
       let label = t.text;
       if (!t.completed) label += t.partialDone ? '（着手）' : '（計画）';
@@ -1175,7 +1154,7 @@ export default function SelfVsSelf() {
   // タスクが今日のポイントに加えた実額。gained を持つならそれが正（旧データはフォールバック計算）
   const reversibleTaskPoints = (t) => {
     if (typeof t.gained === 'number') return t.gained;
-    return (t.completed ? (t.powerEarned || 0) : 0) + (t.partialDone ? (t.partialPower || 0) : 0) + (t.planBonus || 0);
+    return (t.completed ? (t.powerEarned || 0) : 0) + (t.partialDone ? (t.partialPower || 0) : 0) + (t.planBonusDate === todayISO() ? (t.planBonus || 0) : 0);
   };
 
   const addTask = (scheduledDate = '') => {
@@ -1205,6 +1184,7 @@ export default function SelfVsSelf() {
         scheduledDate: sd || null,
         forTomorrow: isFuture,
         planBonus: isFuture ? 5 : 0,
+        planBonusDate: isFuture ? todayISO() : null,
         repeat: 'none',
         gained: isFuture ? 5 : 0,
       };
@@ -1809,9 +1789,9 @@ export default function SelfVsSelf() {
   };
   const habitTasks = tasks.filter(t => isHabitTask(t));
   // 予定タスク: 完了・未完了の両方を表示（このセクション内に残す）
-  const futureTasks = tasks.filter(t => !isHabitTask(t) && !t.failed && t.scheduledDate && t.scheduledDate > _ti).sort(_byDate);
-  const activeTasks = tasks.filter(t => !isHabitTask(t) && !t.completed && !t.failed && !(t.scheduledDate && t.scheduledDate > _ti)).sort(_byDate);
-  const completedTasks = tasks.filter(t => !isHabitTask(t) && t.completed && !(t.scheduledDate && t.scheduledDate > _ti));
+  const futureTasks = tasks.filter(t => !isHabitTask(t) && !t.failed && t.scheduledDate).sort(_byDate);
+  const activeTasks = tasks.filter(t => !isHabitTask(t) && !t.completed && !t.failed && !t.scheduledDate).sort(_byDate);
+  const completedTasks = tasks.filter(t => !isHabitTask(t) && t.completed && !t.scheduledDate);
   const failedTasks = tasks.filter(t => !isHabitTask(t) && t.failed);
 
   // 今日の戦闘時間（タイマー計測したタスクの合計）と敗北時間（ダメタスク合計）
@@ -1907,8 +1887,14 @@ export default function SelfVsSelf() {
                 <div className="h-3 bg-black rounded-full overflow-hidden mb-2"><div className="h-full bg-green-500 transition-all duration-500" style={{ width: `${(todayPower / cmpMax) * 100}%` }} /></div>
                 <div className="flex justify-between text-[11px] mb-1"><span className="text-orange-400">昨日の自分</span><span className="text-orange-400 font-mono">{yesterdayPower}</span></div>
                 <div className="h-3 bg-black rounded-full overflow-hidden"><div className="h-full bg-orange-500 transition-all duration-500" style={{ width: `${(yesterdayPower / cmpMax) * 100}%` }} /></div>
-                <div className={`mt-3 rounded-xl border py-2 text-center text-sm font-bold ${diff >= 0 ? 'border-green-700 bg-green-950/40 text-green-400' : 'border-red-800 bg-red-950/40 text-red-400'}`}>
-                  {yesterdayPower === 0 ? '初日 — 基準を作れ' : diff >= 0 ? `▲ 今日が +${diff} リードしている` : `▼ 昨日に ${Math.abs(diff)} 負けている`}
+                <div className={`mt-3 rounded-xl border py-2 text-center text-sm font-bold ${diff >= 0 ? 'border-green-700 bg-green-950/40 text-green-400' : 'border-amber-700 bg-amber-950/40 text-amber-300'}`}>
+                  {yesterdayPower === 0
+                    ? '初日 — 基準を作れ'
+                    : diff < 0
+                      ? `昨日の自分まで あと ${Math.abs(diff)} ポイント`
+                      : bestDay.power - todayPower > 0
+                        ? `自己ベストまで あと ${bestDay.power - todayPower} ポイント`
+                        : '自己ベスト更新中 — この調子だ'}
                 </div>
               </>
             );
@@ -2097,7 +2083,7 @@ export default function SelfVsSelf() {
                                 ? <span className="text-[9px] px-1.5 py-0.5 rounded bg-cyan-700 text-white font-black tracking-wider">✓ 完了 +{task.powerEarned || 0}</span>
                                 : <span className="text-[9px] px-1.5 py-0.5 rounded border border-cyan-600 text-cyan-200 font-black tracking-wider">予定日: +{diff.power}</span>}
                               {task.partialDate === _ti && <span className="text-[9px] px-1.5 py-0.5 rounded bg-amber-900/50 border border-amber-700 text-amber-300 font-bold">着手 +{task.partialPower}</span>}
-                              {!fDone && <span className="text-[9px] px-1.5 py-0.5 rounded bg-yellow-500 text-black font-black tracking-wider">⚡ 今やる +15</span>}
+                              {!fDone && task.scheduledDate > _ti && <span className="text-[9px] px-1.5 py-0.5 rounded bg-yellow-500 text-black font-black tracking-wider">⚡ 今やる +15</span>}
                             </div>
                           </div>
                           {!activeTaskTimer && !fDone && (
@@ -2336,6 +2322,13 @@ export default function SelfVsSelf() {
                   </button>
                 ))}
               </div>
+              <div className="flex gap-1.5 mb-3">
+                {Object.entries(DIFFICULTIES).map(([k, v]) => (
+                  <button key={k} onClick={() => setQuickDifficulty(k)} className={`flex-1 py-2 rounded-lg text-xs font-bold border-2 transition ${quickDifficulty === k ? v.color + ' scale-105 shadow-md' : 'bg-zinc-800 text-zinc-400 border-zinc-700'}`}>
+                    {v.label} +{v.power}
+                  </button>
+                ))}
+              </div>
               <button
                 onClick={quickStart}
                 disabled={!quickText.trim()}
@@ -2479,7 +2472,8 @@ export default function SelfVsSelf() {
             </div>
           )}
           <div className="grid grid-cols-2 gap-2 mb-2">
-            <button onClick={recordSleep} className={`border-2 rounded-xl p-3 text-left transition active:scale-95 ${sleepTime ? 'bg-zinc-950 border-white' : 'bg-zinc-950 border-zinc-800 hover:border-zinc-600'}`}>
+            <button onClick={recordSleep} className={`relative border-2 rounded-xl p-3 text-left transition active:scale-95 ${sleepTime ? 'bg-zinc-950 border-white' : 'bg-zinc-950 border-zinc-800 hover:border-zinc-600'}`}>
+              {sleepTime && <span role="button" tabIndex={0} onClick={(e) => { e.stopPropagation(); resetSleep(); }} className="absolute top-1 right-1 p-1 text-zinc-500 hover:text-red-400" title="就寝記録を取り消す"><X className="w-3.5 h-3.5" /></span>}
               <div className="flex items-center gap-1 text-[10px] text-zinc-500 font-bold"><Moon className="w-3.5 h-3.5" /> 就寝　予定 {sleepGoal.bedtime}</div>
               {sleepTime ? (
                 <>
@@ -2490,7 +2484,9 @@ export default function SelfVsSelf() {
                 <div className="text-sm text-zinc-500 mt-1">タップで記録</div>
               )}
             </button>
-            <button onClick={recordWakeUp} className={`border-2 rounded-xl p-3 text-left transition active:scale-95 ${wakeTime ? 'bg-zinc-950 border-white' : 'bg-zinc-950 border-zinc-800 hover:border-zinc-600'}`}>              <div className="flex items-center gap-1 text-[10px] text-zinc-500 font-bold"><Sunrise className="w-3.5 h-3.5" /> 起床　予定 {sleepGoal.wakeup}</div>
+            <button onClick={recordWakeUp} className={`relative border-2 rounded-xl p-3 text-left transition active:scale-95 ${wakeTime ? 'bg-zinc-950 border-white' : 'bg-zinc-950 border-zinc-800 hover:border-zinc-600'}`}>
+              {wakeTime && <span role="button" tabIndex={0} onClick={(e) => { e.stopPropagation(); resetWakeUp(); }} className="absolute top-1 right-1 p-1 text-zinc-500 hover:text-red-400" title="起床記録を取り消す"><X className="w-3.5 h-3.5" /></span>}
+              <div className="flex items-center gap-1 text-[10px] text-zinc-500 font-bold"><Sunrise className="w-3.5 h-3.5" /> 起床　予定 {sleepGoal.wakeup}</div>
               {wakeTime ? (
                 <>
                   <div className="text-xl font-black font-mono text-white mt-1">{wakeTime.time}</div>
