@@ -1173,7 +1173,7 @@ export default function SelfVsSelf() {
         habitDoneDate: null,
       };
     } else {
-      const sd = scheduledDate || '';
+      const sd = scheduledDate || todayISO();
       const isFuture = sd && sd > todayISO();
       task = {
         id: Date.now().toString(),
@@ -1181,7 +1181,7 @@ export default function SelfVsSelf() {
         categoryId: newCategoryId,
         difficulty: newDifficulty,
         completed: false,
-        scheduledDate: sd || null,
+        scheduledDate: sd,
         forTomorrow: isFuture,
         planBonus: isFuture ? 5 : 0,
         planBonusDate: isFuture ? todayISO() : null,
