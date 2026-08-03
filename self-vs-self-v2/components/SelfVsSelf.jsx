@@ -1173,8 +1173,9 @@ export default function SelfVsSelf() {
         habitDoneDate: null,
       };
     } else {
-      const sd = scheduledDate || todayISO();
-      const isFuture = sd && sd > todayISO();
+      const noDeadline = scheduledDate === '__none__' || scheduledDate === null;
+      const sd = noDeadline ? null : (scheduledDate || todayISO());
+      const isFuture = !!sd && sd > todayISO();
       task = {
         id: Date.now().toString(),
         text: newTask.trim(),
@@ -2004,13 +2005,16 @@ export default function SelfVsSelf() {
             </div>
             {newRepeat === 'none' && (
             <div className="flex flex-wrap items-center gap-1.5 mb-2">
-              <button onClick={() => setNewScheduledDate('')} className={`px-3.5 py-1.5 rounded-lg text-[11px] font-bold border-2 transition ${!newScheduledDate ? 'bg-gradient-to-r from-blue-600 to-cyan-600 text-white border-transparent shadow-md scale-105' : 'bg-zinc-800 text-zinc-400 border-zinc-700 hover:border-zinc-500'}`}>
+              <button onClick={() => setNewScheduledDate('')} className={`px-3.5 py-1.5 rounded-lg text-[11px] font-bold border-2 transition ${newScheduledDate === '' ? 'bg-gradient-to-r from-blue-600 to-cyan-600 text-white border-transparent shadow-md scale-105' : 'bg-zinc-800 text-zinc-400 border-zinc-700 hover:border-zinc-500'}`}>
                 今日
               </button>
-              <button onClick={() => setNewScheduledDate((prev) => prev || dateAfter(1))} className={`px-3.5 py-1.5 rounded-lg text-[11px] font-bold border-2 transition ${newScheduledDate ? 'bg-gradient-to-r from-blue-600 to-cyan-600 text-white border-transparent shadow-md scale-105' : 'bg-zinc-800 text-zinc-400 border-zinc-700 hover:border-zinc-500'}`}>
+              <button onClick={() => setNewScheduledDate((prev) => (prev && prev !== '__none__') ? prev : dateAfter(1))} className={`px-3.5 py-1.5 rounded-lg text-[11px] font-bold border-2 transition ${newScheduledDate && newScheduledDate !== '__none__' ? 'bg-gradient-to-r from-blue-600 to-cyan-600 text-white border-transparent shadow-md scale-105' : 'bg-zinc-800 text-zinc-400 border-zinc-700 hover:border-zinc-500'}`}>
                 日付を指定
               </button>
-              {newScheduledDate && (
+              <button onClick={() => setNewScheduledDate('__none__')} className={`px-3.5 py-1.5 rounded-lg text-[11px] font-bold border-2 transition ${newScheduledDate === '__none__' ? 'bg-gradient-to-r from-zinc-500 to-zinc-600 text-white border-transparent shadow-md scale-105' : 'bg-zinc-800 text-zinc-400 border-zinc-700 hover:border-zinc-500'}`}>
+                期限なし
+              </button>
+              {newScheduledDate && newScheduledDate !== '__none__' && (
                 <input
                   type="date"
                   value={newScheduledDate}
@@ -2031,9 +2035,11 @@ export default function SelfVsSelf() {
               ))}
             </div>
             <div className="flex gap-2">
-              <button onClick={() => addTask(newScheduledDate)} disabled={!newTask.trim()} className={`flex-1 text-white font-black tracking-wider py-3 rounded-lg disabled:opacity-30 disabled:cursor-not-allowed transition active:scale-95 shadow-md flex items-center justify-center gap-1.5 ${newRepeat !== 'none' ? 'bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-500 hover:to-pink-500' : (newScheduledDate && newScheduledDate > todayISO() ? 'bg-gradient-to-r from-blue-600 to-cyan-600 hover:from-blue-500 hover:to-cyan-500' : 'bg-gradient-to-r from-red-600 to-orange-600 hover:from-red-500 hover:to-orange-500')}`}>
+              <button onClick={() => addTask(newScheduledDate)} disabled={!newTask.trim()} className={`flex-1 text-white font-black tracking-wider py-3 rounded-lg disabled:opacity-30 disabled:cursor-not-allowed transition active:scale-95 shadow-md flex items-center justify-center gap-1.5 ${newRepeat !== 'none' ? 'bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-500 hover:to-pink-500' : (newScheduledDate === '__none__' ? 'bg-gradient-to-r from-zinc-600 to-zinc-700 hover:from-zinc-500 hover:to-zinc-600' : (newScheduledDate && newScheduledDate > todayISO() ? 'bg-gradient-to-r from-blue-600 to-cyan-600 hover:from-blue-500 hover:to-cyan-500' : 'bg-gradient-to-r from-red-600 to-orange-600 hover:from-red-500 hover:to-orange-500'))}`}>
                 {newRepeat !== 'none' ? (
                   <>🔁 定期的なタスクを追加（{newRepeat === 'daily' ? '毎日' : '毎週'}）</>
+                ) : newScheduledDate === '__none__' ? (
+                  <>➕ 期限なしのタスクを追加</>
                 ) : newScheduledDate && newScheduledDate > todayISO() ? (
                   <><CalendarPlus className="w-4 h-4" />{formatSchedDate(newScheduledDate)}に予定を追加 （計画+5）</>
                 ) : (
